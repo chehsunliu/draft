@@ -28,8 +28,8 @@ openapi_schema = load_openapi_schema()
 
 
 @pytest.fixture(name="proc_env", scope="package")
-def proc_env_fixture() -> Iterator[dict[str, str]]:
-    yield {}
+def proc_env_fixture(control_plane_env: dict[str, str]) -> Iterator[dict[str, str]]:
+    yield control_plane_env
 
 
 @pytest.fixture(name="raw_logged_server_daemon", scope="package")

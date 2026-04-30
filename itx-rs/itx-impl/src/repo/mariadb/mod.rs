@@ -1,6 +1,11 @@
+use std::sync::Arc;
+
 use itx_contract::repo::factory::RepoFactory;
+use itx_contract::repo::post::PostRepo;
 use sqlx::MySqlPool;
 use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};
+
+use crate::repo::mariadb::post::MariaDbPostRepo;
 
 pub mod post;
 
@@ -38,4 +43,8 @@ impl MariaDbRepoFactory {
     }
 }
 
-impl RepoFactory for MariaDbRepoFactory {}
+impl RepoFactory for MariaDbRepoFactory {
+    fn create_post_repo(&self) -> Arc<dyn PostRepo> {
+        Arc::new(MariaDbPostRepo::new(self.pool.clone()))
+    }
+}

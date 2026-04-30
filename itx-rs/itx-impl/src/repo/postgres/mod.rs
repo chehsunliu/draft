@@ -1,6 +1,11 @@
+use std::sync::Arc;
+
 use itx_contract::repo::factory::RepoFactory;
+use itx_contract::repo::post::PostRepo;
 use sqlx::PgPool;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+
+use crate::repo::postgres::post::PostgresPostRepo;
 
 pub mod post;
 
@@ -35,4 +40,8 @@ impl PostgresRepoFactory {
     }
 }
 
-impl RepoFactory for PostgresRepoFactory {}
+impl RepoFactory for PostgresRepoFactory {
+    fn create_post_repo(&self) -> Arc<dyn PostRepo> {
+        Arc::new(PostgresPostRepo::new(self.pool.clone()))
+    }
+}

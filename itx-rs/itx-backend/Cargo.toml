@@ -16,3 +16,4 @@ tracing-subscriber = { version = "0.3", features = ["json"]}
 uuid = { version = "1", features = ["v4"] }
 
 itx-contract = { path = "../itx-contract" }
+itx-impl = { path = "../itx-impl" }
