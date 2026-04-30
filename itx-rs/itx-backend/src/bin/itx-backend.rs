@@ -30,7 +30,7 @@ async fn main() {
         .init();
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    let state = AppState {};
+    let state = AppState::from_env().await.unwrap();
 
     axum::serve(listener, create_app(state))
         .with_graceful_shutdown(shutdown_signal())
