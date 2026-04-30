@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use itx_contract::repo::error::RepoError;
 use itx_contract::repo::post::{
-    AuthorId, ListPostsQuery, NewPost, Post, PostId, PostPatch, PostRepo,
+    AuthorId, CreateParams, DeleteParams, GetParams, ListParams, Post, PostId, PostRepo,
+    UpdateParams,
 };
 use sqlx::{PgPool, Postgres, Transaction};
 
@@ -84,12 +85,12 @@ async fn fetch_tags_for(
 
 #[async_trait]
 impl PostRepo for PostgresPostRepo {
-    async fn list(&self, query: ListPostsQuery) -> Result<Vec<Post>, RepoError> {
-        let limit = if query.limit == 0 { 50 } else { query.limit as i64 };
-        let offset = query.offset as i64;
+    async fn list(&self, params: ListParams) -> Result<Vec<Post>, RepoError> {
+        let limit = if params.limit == 0 { 50 } else { params.limit as i64 };
+        let offset = params.offset as i64;
 
         let rows: Vec<(PostId, AuthorId, String, String, time::OffsetDateTime)> =
-            match query.author_id {
+            match params.author_id {
                 Some(author_id) => sqlx::query_as(
                     "SELECT id, author_id, title, body, created_at \
                      FROM posts WHERE author_id = $1 \
@@ -128,65 +129,60 @@ impl PostRepo for PostgresPostRepo {
             .collect())
     }
 
-    async fn get(&self, id: PostId) -> Result<Option<Post>, RepoError> {
+    async fn get(&self, params: GetParams) -> Result<Post, RepoError> {
         let row: Option<(PostId, AuthorId, String, String, time::OffsetDateTime)> =
             sqlx::query_as(
                 "SELECT id, author_id, title, body, created_at FROM posts WHERE id = $1",
             )
-            .bind(id)
+            .bind(params.id)
             .fetch_optional(&self.pool)
             .await
             .map_err(err)?;
 
         let Some((id, author_id, title, body, created_at)) = row else {
-            return Ok(None);
+            return Err(RepoError::NotFound);
         };
         let mut tag_map = fetch_tags_for(&self.pool, &[id]).await?;
-        Ok(Some(Post {
+        Ok(Post {
             id,
             author_id,
             title,
             body,
             tags: tag_map.remove(&id).unwrap_or_default(),
             created_at,
-        }))
+        })
     }
 
-    async fn create(&self, input: NewPost) -> Result<Post, RepoError> {
+    async fn create(&self, params: CreateParams) -> Result<Post, RepoError> {
         let mut tx = self.pool.begin().await.map_err(err)?;
 
         let (id, created_at): (PostId, time::OffsetDateTime) = sqlx::query_as(
             "INSERT INTO posts (author_id, title, body) VALUES ($1, $2, $3) \
              RETURNING id, created_at",
         )
-        .bind(input.author_id)
-        .bind(&input.title)
-        .bind(&input.body)
+        .bind(params.author_id)
+        .bind(&params.title)
+        .bind(&params.body)
         .fetch_one(&mut *tx)
         .await
         .map_err(err)?;
 
-        let tag_ids = upsert_tags(&mut tx, &input.tags).await?;
+        let tag_ids = upsert_tags(&mut tx, &params.tags).await?;
         link_post_tags(&mut tx, id, &tag_ids).await?;
 
         tx.commit().await.map_err(err)?;
 
         Ok(Post {
             id,
-            author_id: input.author_id,
-            title: input.title,
-            body: input.body,
-            tags: input.tags,
+            author_id: params.author_id,
+            title: params.title,
+            body: params.body,
+            tags: params.tags,
             created_at,
         })
     }
 
-    async fn update(
-        &self,
-        id: PostId,
-        author_id: AuthorId,
-        patch: PostPatch,
-    ) -> Result<Option<Post>, RepoError> {
+    async fn update(&self, params: UpdateParams) -> Result<Post, RepoError> {
         let mut tx = self.pool.begin().await.map_err(err)?;
 
         let existing: Option<(PostId, AuthorId, String, String, time::OffsetDateTime)> =
@@ -194,46 +190,46 @@ impl PostRepo for PostgresPostRepo {
                 "SELECT id, author_id, title, body, created_at \
                  FROM posts WHERE id = $1 AND author_id = $2 FOR UPDATE",
             )
-            .bind(id)
-            .bind(author_id)
+            .bind(params.id)
+            .bind(params.author_id)
             .fetch_optional(&mut *tx)
             .await
             .map_err(err)?;
 
         let Some((_, _, mut title, mut body, created_at)) = existing else {
-            return Ok(None);
+            return Err(RepoError::NotFound);
         };
 
-        if let Some(t) = patch.title {
+        if let Some(t) = params.title {
             title = t;
         }
-        if let Some(b) = patch.body {
+        if let Some(b) = params.body {
             body = b;
         }
 
         sqlx::query("UPDATE posts SET title = $1, body = $2 WHERE id = $3")
             .bind(&title)
             .bind(&body)
-            .bind(id)
+            .bind(params.id)
             .execute(&mut *tx)
             .await
             .map_err(err)?;
 
-        let tags = if let Some(new_tags) = patch.tags {
+        let tags = if let Some(new_tags) = params.tags {
             sqlx::query("DELETE FROM post_tags WHERE post_id = $1")
-                .bind(id)
+                .bind(params.id)
                 .execute(&mut *tx)
                 .await
                 .map_err(err)?;
             let tag_ids = upsert_tags(&mut tx, &new_tags).await?;
-            link_post_tags(&mut tx, id, &tag_ids).await?;
+            link_post_tags(&mut tx, params.id, &tag_ids).await?;
             new_tags
         } else {
             let rows: Vec<(String,)> = sqlx::query_as(
                 "SELECT t.name FROM post_tags pt JOIN tags t ON pt.tag_id = t.id \
                  WHERE pt.post_id = $1 ORDER BY t.name",
             )
-            .bind(id)
+            .bind(params.id)
             .fetch_all(&mut *tx)
             .await
             .map_err(err)?;
@@ -242,23 +238,26 @@ impl PostRepo for PostgresPostRepo {
 
         tx.commit().await.map_err(err)?;
 
-        Ok(Some(Post {
-            id,
-            author_id,
+        Ok(Post {
+            id: params.id,
+            author_id: params.author_id,
             title,
             body,
             tags,
             created_at,
-        }))
+        })
     }
 
-    async fn delete(&self, id: PostId, author_id: AuthorId) -> Result<bool, RepoError> {
+    async fn delete(&self, params: DeleteParams) -> Result<(), RepoError> {
         let result = sqlx::query("DELETE FROM posts WHERE id = $1 AND author_id = $2")
-            .bind(id)
-            .bind(author_id)
+            .bind(params.id)
+            .bind(params.author_id)
             .execute(&self.pool)
             .await
             .map_err(err)?;
-        Ok(result.rows_affected() > 0)
+        if result.rows_affected() == 0 {
+            return Err(RepoError::NotFound);
+        }
+        Ok(())
     }
 }
