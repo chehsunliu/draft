@@ -23,7 +23,48 @@ paths:
               example:
                 data:
                   status: ok
+  /api/v1/posts:
+    get:
+      summary: List posts
+      operationId: listPosts
+      parameters:
+        - $ref: "#/components/parameters/ItxUserId"
+        - $ref: "#/components/parameters/ItxRequestId"
+      responses:
+        "200":
+          description: Posts owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListPostsResponse"
+              example:
+                data:
+                  items: []
+        "401":
+          description: Caller is not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  message: Unauthorized
 components:
+  parameters:
+    ItxUserId:
+      name: X-Itx-User-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ItxRequestId:
+      name: X-Itx-Request-Id
+      in: header
+      required: false
+      schema:
+        type: string
+        format: uuid
   schemas:
     HealthResponse:
       type: object
@@ -36,3 +77,27 @@ components:
             status:
               type: string
               enum: [ok]
+    ListPostsResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Post"
+    Post:
+      type: object
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [message]
+          properties:
+            message:
+              type: string
