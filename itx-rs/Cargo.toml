@@ -1,0 +1,8 @@
+[workspace]
+resolver = "3"
+members = [
+    "itx-backend",
+    "itx-contract",
+    "itx-impl",
+    "itx-worker",
+]

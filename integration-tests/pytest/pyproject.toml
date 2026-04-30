@@ -1,7 +1,7 @@
 [project]
-name = "draft-integration-tests"
+name = "itx-integration-tests"
 version = "0.1.0"
-description = "Integration tests for the Draft projects"
+description = "Integration tests for the ITX projects"
 readme = "README.md"
 requires-python = ">=3.14"
 
@@ -24,7 +24,7 @@ line-length = 120
 select = ["E4", "E7", "E9", "F", "B"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["draft_*"]
+known-first-party = ["itx_*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

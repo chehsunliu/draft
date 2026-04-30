@@ -1,6 +1,6 @@
-# Draft
+# ITX
 
-[![Draft Testing in Pytest](https://github.com/chehsunliu/draft/actions/workflows/draft-testing-in-pytest.yml/badge.svg)](https://github.com/chehsunliu/draft/actions/workflows/draft-testing-in-pytest.yml)
+[![ITX Testing in Pytest](https://github.com/chehsunliu/itx/actions/workflows/itx-testing-in-pytest.yml/badge.svg)](https://github.com/chehsunliu/itx/actions/workflows/itx-testing-in-pytest.yml)
 
 A demonstration project for performing integration testing on multi-module backend systems using **Vitest** and **Pytest** as test runners.
 
@@ -15,13 +15,13 @@ The project is designed to support multiple backend languages behind a shared AP
 
 ## Development
 
-The pytest integration suite picks which backend to build and run via the `DRAFT_LANG` env var (`rust` by default, or `golang`). The fixtures handle building the binary and starting/stopping the server — you don't need to run anything in `draft-rs/` or `draft-go/` yourself.
+The pytest integration suite picks which backend to build and run via the `ITX_LANG` env var (`rust` by default, or `golang`). The fixtures handle building the binary and starting/stopping the server — you don't need to run anything in `itx-rs/` or `itx-go/` yourself.
 
 Prerequisites:
 
 - Python 3.14 + [`uv`](https://docs.astral.sh/uv/)
-- Rust toolchain (stable) — for `DRAFT_LANG=rust`
-- Go (version in `draft-go/draft-backend/go.mod`) — for `DRAFT_LANG=golang`
+- Rust toolchain (stable) — for `ITX_LANG=rust`
+- Go (version in `itx-go/itx-backend/go.mod`) — for `ITX_LANG=golang`
 
 One-time setup:
 
@@ -35,11 +35,11 @@ Run the suite against the rust backend (default):
 ```sh
 make test
 # or, explicitly:
-DRAFT_LANG=rust make test
+ITX_LANG=rust make test
 ```
 
 Run the same suite against the go backend:
 
 ```sh
-DRAFT_LANG=golang make test
+ITX_LANG=golang make test
 ```

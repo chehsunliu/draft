@@ -5,9 +5,9 @@ services:
     ports:
       - "127.0.0.1:0:5432"
     environment:
-      POSTGRES_DB: draft-db
-      POSTGRES_USER: draft-admin
-      POSTGRES_PASSWORD: "draft-admin"
+      POSTGRES_DB: itx-db
+      POSTGRES_USER: itx-admin
+      POSTGRES_PASSWORD: "itx-admin"
     command:
       - "-c"
       - "log_statement=all"
@@ -22,9 +22,9 @@ services:
         source: ../storage/postgres/sql
         target: /flyway/sql
     command:
-      - "-url=jdbc:postgresql://postgres:5432/draft-db"
-      - "-user=draft-admin"
-      - "-password=draft-admin"
+      - "-url=jdbc:postgresql://postgres:5432/itx-db"
+      - "-user=itx-admin"
+      - "-password=itx-admin"
       - "-locations=filesystem:/flyway/sql"
       - "-connectRetries=15"
       - "migrate"
@@ -35,10 +35,10 @@ services:
     ports:
       - "127.0.0.1:0:3306"
     environment:
-      MARIADB_DATABASE: draft-db
-      MARIADB_USER: draft-admin
-      MARIADB_PASSWORD: "draft-admin"
-      MARIADB_ROOT_PASSWORD: "draft-admin"
+      MARIADB_DATABASE: itx-db
+      MARIADB_USER: itx-admin
+      MARIADB_PASSWORD: "itx-admin"
+      MARIADB_ROOT_PASSWORD: "itx-admin"
     command:
       - "--general-log=1"
       - "--general-log-file=/var/log/mysql/general.log"
@@ -53,9 +53,9 @@ services:
         source: ../storage/mariadb/sql
         target: /flyway/sql
     command:
-      - "-url=jdbc:mariadb://mariadb:3306/draft-db"
-      - "-user=draft-admin"
-      - "-password=draft-admin"
+      - "-url=jdbc:mariadb://mariadb:3306/itx-db"
+      - "-user=itx-admin"
+      - "-password=itx-admin"
       - "-locations=filesystem:/flyway/sql"
       - "-connectRetries=15"
       - "migrate"

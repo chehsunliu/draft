@@ -1,7 +1,7 @@
 openapi: 3.1.0
 
 info:
-  title: Draft API
+  title: ITX API
   version: 0.1.0
   description: Shared API spec implemented by every backend (Go, Rust, ...).
 
