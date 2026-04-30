@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use itx_contract::repo::error::RepoError;
 use itx_contract::repo::post::{
-    AuthorId, CreateParams, DeleteParams, GetParams, ListParams, Post, PostId, PostRepo,
-    UpdateParams,
+    AuthorId, CreateParams, DeleteParams, GetParams, ListParams, Post, PostId, PostRepo, UpdateParams,
 };
 use sqlx::{PgPool, Postgres, Transaction};
 
@@ -22,10 +21,7 @@ fn err<E: std::fmt::Display>(e: E) -> RepoError {
     RepoError::Unknown(e.to_string())
 }
 
-async fn upsert_tags(
-    tx: &mut Transaction<'_, Postgres>,
-    names: &[String],
-) -> Result<Vec<i64>, RepoError> {
+async fn upsert_tags(tx: &mut Transaction<'_, Postgres>, names: &[String]) -> Result<Vec<i64>, RepoError> {
     let mut ids = Vec::with_capacity(names.len());
     for name in names {
         let id: i64 = sqlx::query_scalar(
@@ -42,28 +38,19 @@ async fn upsert_tags(
     Ok(ids)
 }
 
-async fn link_post_tags(
-    tx: &mut Transaction<'_, Postgres>,
-    post_id: PostId,
-    tag_ids: &[i64],
-) -> Result<(), RepoError> {
+async fn link_post_tags(tx: &mut Transaction<'_, Postgres>, post_id: PostId, tag_ids: &[i64]) -> Result<(), RepoError> {
     for tid in tag_ids {
-        sqlx::query(
-            "INSERT INTO post_tags (post_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-        )
-        .bind(post_id)
-        .bind(tid)
-        .execute(&mut **tx)
-        .await
-        .map_err(err)?;
+        sqlx::query("INSERT INTO post_tags (post_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING")
+            .bind(post_id)
+            .bind(tid)
+            .execute(&mut **tx)
+            .await
+            .map_err(err)?;
     }
     Ok(())
 }
 
-async fn fetch_tags_for(
-    pool: &PgPool,
-    post_ids: &[PostId],
-) -> Result<HashMap<PostId, Vec<String>>, RepoError> {
+async fn fetch_tags_for(pool: &PgPool, post_ids: &[PostId]) -> Result<HashMap<PostId, Vec<String>>, RepoError> {
     if post_ids.is_empty() {
         return Ok(HashMap::new());
     }
@@ -88,36 +75,31 @@ async fn fetch_tags_for(
 #[async_trait]
 impl PostRepo for PostgresPostRepo {
     async fn list(&self, params: ListParams) -> Result<Vec<Post>, RepoError> {
-        let limit = if params.limit == 0 {
-            50
-        } else {
-            params.limit as i64
-        };
+        let limit = if params.limit == 0 { 50 } else { params.limit as i64 };
         let offset = params.offset as i64;
 
-        let rows: Vec<(PostId, AuthorId, String, String, time::OffsetDateTime)> =
-            match params.author_id {
-                Some(author_id) => sqlx::query_as(
-                    "SELECT id, author_id, title, body, created_at \
+        let rows: Vec<(PostId, AuthorId, String, String, time::OffsetDateTime)> = match params.author_id {
+            Some(author_id) => sqlx::query_as(
+                "SELECT id, author_id, title, body, created_at \
                      FROM posts WHERE author_id = $1 \
                      ORDER BY id DESC LIMIT $2 OFFSET $3",
-                )
-                .bind(author_id)
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(&self.pool)
-                .await
-                .map_err(err)?,
-                None => sqlx::query_as(
-                    "SELECT id, author_id, title, body, created_at \
+            )
+            .bind(author_id)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(err)?,
+            None => sqlx::query_as(
+                "SELECT id, author_id, title, body, created_at \
                      FROM posts ORDER BY id DESC LIMIT $1 OFFSET $2",
-                )
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(&self.pool)
-                .await
-                .map_err(err)?,
-            };
+            )
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(err)?,
+        };
 
         let ids: Vec<PostId> = rows.iter().map(|r| r.0).collect();
         let mut tag_map = fetch_tags_for(&self.pool, &ids).await?;
@@ -136,13 +118,12 @@ impl PostRepo for PostgresPostRepo {
     }
 
     async fn get(&self, params: GetParams) -> Result<Post, RepoError> {
-        let row: Option<(PostId, AuthorId, String, String, time::OffsetDateTime)> = sqlx::query_as(
-            "SELECT id, author_id, title, body, created_at FROM posts WHERE id = $1",
-        )
-        .bind(params.id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(err)?;
+        let row: Option<(PostId, AuthorId, String, String, time::OffsetDateTime)> =
+            sqlx::query_as("SELECT id, author_id, title, body, created_at FROM posts WHERE id = $1")
+                .bind(params.id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(err)?;
 
         let Some((id, author_id, title, body, created_at)) = row else {
             return Err(RepoError::NotFound);
@@ -190,16 +171,15 @@ impl PostRepo for PostgresPostRepo {
     async fn update(&self, params: UpdateParams) -> Result<Post, RepoError> {
         let mut tx = self.pool.begin().await.map_err(err)?;
 
-        let existing: Option<(PostId, AuthorId, String, String, time::OffsetDateTime)> =
-            sqlx::query_as(
-                "SELECT id, author_id, title, body, created_at \
+        let existing: Option<(PostId, AuthorId, String, String, time::OffsetDateTime)> = sqlx::query_as(
+            "SELECT id, author_id, title, body, created_at \
                  FROM posts WHERE id = $1 AND author_id = $2 FOR UPDATE",
-            )
-            .bind(params.id)
-            .bind(params.author_id)
-            .fetch_optional(&mut *tx)
-            .await
-            .map_err(err)?;
+        )
+        .bind(params.id)
+        .bind(params.author_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(err)?;
 
         let Some((_, _, mut title, mut body, created_at)) = existing else {
             return Err(RepoError::NotFound);

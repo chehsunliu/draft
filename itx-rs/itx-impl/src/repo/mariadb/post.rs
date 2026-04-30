@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use itx_contract::repo::error::RepoError;
 use itx_contract::repo::post::{
-    AuthorId, CreateParams, DeleteParams, GetParams, ListParams, Post, PostId, PostRepo,
-    UpdateParams,
+    AuthorId, CreateParams, DeleteParams, GetParams, ListParams, Post, PostId, PostRepo, UpdateParams,
 };
 use sqlx::{MySql, MySqlPool, Transaction};
 use uuid::Uuid;
@@ -27,10 +26,7 @@ fn parse_author(s: &str) -> Result<AuthorId, RepoError> {
     Uuid::parse_str(s).map_err(err)
 }
 
-async fn upsert_tags(
-    tx: &mut Transaction<'_, MySql>,
-    names: &[String],
-) -> Result<Vec<i64>, RepoError> {
+async fn upsert_tags(tx: &mut Transaction<'_, MySql>, names: &[String]) -> Result<Vec<i64>, RepoError> {
     let mut ids = Vec::with_capacity(names.len());
     for name in names {
         sqlx::query("INSERT IGNORE INTO tags (name) VALUES (?)")
@@ -48,11 +44,7 @@ async fn upsert_tags(
     Ok(ids)
 }
 
-async fn link_post_tags(
-    tx: &mut Transaction<'_, MySql>,
-    post_id: PostId,
-    tag_ids: &[i64],
-) -> Result<(), RepoError> {
+async fn link_post_tags(tx: &mut Transaction<'_, MySql>, post_id: PostId, tag_ids: &[i64]) -> Result<(), RepoError> {
     for tid in tag_ids {
         sqlx::query("INSERT IGNORE INTO post_tags (post_id, tag_id) VALUES (?, ?)")
             .bind(post_id)
@@ -64,10 +56,7 @@ async fn link_post_tags(
     Ok(())
 }
 
-async fn fetch_tags_for(
-    pool: &MySqlPool,
-    post_ids: &[PostId],
-) -> Result<HashMap<PostId, Vec<String>>, RepoError> {
+async fn fetch_tags_for(pool: &MySqlPool, post_ids: &[PostId]) -> Result<HashMap<PostId, Vec<String>>, RepoError> {
     if post_ids.is_empty() {
         return Ok(HashMap::new());
     }
@@ -94,36 +83,31 @@ async fn fetch_tags_for(
 #[async_trait]
 impl PostRepo for MariaDbPostRepo {
     async fn list(&self, params: ListParams) -> Result<Vec<Post>, RepoError> {
-        let limit = if params.limit == 0 {
-            50
-        } else {
-            params.limit as i64
-        };
+        let limit = if params.limit == 0 { 50 } else { params.limit as i64 };
         let offset = params.offset as i64;
 
-        let rows: Vec<(PostId, String, String, String, time::OffsetDateTime)> =
-            match params.author_id {
-                Some(author_id) => sqlx::query_as(
-                    "SELECT id, author_id, title, body, created_at \
+        let rows: Vec<(PostId, String, String, String, time::OffsetDateTime)> = match params.author_id {
+            Some(author_id) => sqlx::query_as(
+                "SELECT id, author_id, title, body, created_at \
                      FROM posts WHERE author_id = ? \
                      ORDER BY id DESC LIMIT ? OFFSET ?",
-                )
-                .bind(author_id.to_string())
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(&self.pool)
-                .await
-                .map_err(err)?,
-                None => sqlx::query_as(
-                    "SELECT id, author_id, title, body, created_at \
+            )
+            .bind(author_id.to_string())
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(err)?,
+            None => sqlx::query_as(
+                "SELECT id, author_id, title, body, created_at \
                      FROM posts ORDER BY id DESC LIMIT ? OFFSET ?",
-                )
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(&self.pool)
-                .await
-                .map_err(err)?,
-            };
+            )
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(err)?,
+        };
 
         let ids: Vec<PostId> = rows.iter().map(|r| r.0).collect();
         let mut tag_map = fetch_tags_for(&self.pool, &ids).await?;
@@ -176,12 +160,11 @@ impl PostRepo for MariaDbPostRepo {
             .map_err(err)?;
         let id = result.last_insert_id() as PostId;
 
-        let created_at: time::OffsetDateTime =
-            sqlx::query_scalar("SELECT created_at FROM posts WHERE id = ?")
-                .bind(id)
-                .fetch_one(&mut *tx)
-                .await
-                .map_err(err)?;
+        let created_at: time::OffsetDateTime = sqlx::query_scalar("SELECT created_at FROM posts WHERE id = ?")
+            .bind(id)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(err)?;
 
         let tag_ids = upsert_tags(&mut tx, &params.tags).await?;
         link_post_tags(&mut tx, id, &tag_ids).await?;
@@ -201,16 +184,15 @@ impl PostRepo for MariaDbPostRepo {
     async fn update(&self, params: UpdateParams) -> Result<Post, RepoError> {
         let mut tx = self.pool.begin().await.map_err(err)?;
 
-        let existing: Option<(PostId, String, String, String, time::OffsetDateTime)> =
-            sqlx::query_as(
-                "SELECT id, author_id, title, body, created_at \
+        let existing: Option<(PostId, String, String, String, time::OffsetDateTime)> = sqlx::query_as(
+            "SELECT id, author_id, title, body, created_at \
                  FROM posts WHERE id = ? AND author_id = ? FOR UPDATE",
-            )
-            .bind(params.id)
-            .bind(params.author_id.to_string())
-            .fetch_optional(&mut *tx)
-            .await
-            .map_err(err)?;
+        )
+        .bind(params.id)
+        .bind(params.author_id.to_string())
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(err)?;
 
         let Some((_, _, mut title, mut body, created_at)) = existing else {
             return Err(RepoError::NotFound);

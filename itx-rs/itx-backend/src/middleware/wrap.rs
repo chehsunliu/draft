@@ -41,11 +41,7 @@ pub async fn wrap_response(req: Request<Body>, next: Next) -> Response {
         // case 3: error, no json → generic error message
         let detail = String::from_utf8_lossy(&bytes);
         let message = if detail.is_empty() {
-            parts
-                .status
-                .canonical_reason()
-                .unwrap_or("unknown error")
-                .to_string()
+            parts.status.canonical_reason().unwrap_or("unknown error").to_string()
         } else {
             detail.into_owned()
         };
