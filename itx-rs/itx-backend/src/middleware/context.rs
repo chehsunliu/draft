@@ -6,8 +6,8 @@ use axum::{
 };
 use uuid::Uuid;
 
-pub const HEADER_REQUEST_ID: &str = "x-itx-request-id";
-pub const HEADER_USER_ID: &str = "x-itx-user-id";
+pub const HEADER_REQUEST_ID: &str = "X-Itx-Request-Id";
+pub const HEADER_USER_ID: &str = "X-Itx-User-Id";
 
 #[derive(Clone, Debug)]
 pub struct ItxContext {

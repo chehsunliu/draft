@@ -13,7 +13,9 @@ pub fn create_app(app_state: AppState) -> Router {
     let public = Router::new().nest("/health", feature::health::create_router());
 
     // Future feature routers that need auth get nested here.
-    let protected: Router<AppState> = Router::new().layer(from_fn(middleware::auth::require_user));
+    let protected: Router<AppState> = Router::new()
+        .nest("/posts", feature::post::create_router())
+        .layer(from_fn(middleware::auth::require_user));
 
     Router::new()
         .nest("/api/v1", Router::new().merge(public).merge(protected))
