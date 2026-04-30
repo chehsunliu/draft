@@ -14,6 +14,7 @@ import (
 
 func NewRouter(_ state.AppState) *gin.Engine {
 	r := gin.New()
+	r.HandleMethodNotAllowed = true
 	r.Use(gin.Recovery())
 	r.Use(wrap.Response())
 

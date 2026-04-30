@@ -1,10 +1,7 @@
 import json
 import socket
 import time
-from pathlib import Path
 from typing import IO, Any, AnyStr
-
-RS_ROOT = Path(__file__).parent / "../../../../draft-rs"
 
 RFC3339_RE = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"
 

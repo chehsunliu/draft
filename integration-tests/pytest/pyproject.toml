@@ -32,3 +32,8 @@ pythonpath = ["tests"]
 
 [tool.mypy]
 check_untyped_defs = true
+
+[dependency-groups]
+dev = [
+    "types-pyyaml>=6.0.12.20260408",
+]

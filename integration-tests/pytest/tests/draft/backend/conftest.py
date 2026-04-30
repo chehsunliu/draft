@@ -1,6 +1,3 @@
-import os
-import signal
-import subprocess
 from pathlib import Path
 from subprocess import Popen
 from typing import Iterator
@@ -10,7 +7,7 @@ import pytest
 import yaml
 
 from draft_testkit.openapi import OpenAPIValidator
-from draft_testkit.utils import RS_ROOT, read_all_logs, wait_for_port
+from draft_testkit.utils import read_all_logs
 
 
 def load_openapi_schema():
@@ -25,60 +22,6 @@ def load_openapi_schema():
 
 
 openapi_schema = load_openapi_schema()
-
-
-@pytest.fixture(name="proc_env", scope="package")
-def proc_env_fixture() -> Iterator[dict[str, str]]:
-    yield {}
-
-
-@pytest.fixture(name="build_artifacts", autouse=True, scope="package")
-def build_artifacts_fixture():
-    subprocess.run(["cargo", "build"], cwd=RS_ROOT).check_returncode()
-    yield True
-
-
-@pytest.fixture(name="raw_logged_server_daemon", autouse=True, scope="package")
-def raw_logged_server_daemon_fixture(proc_env: dict[str, str]) -> Iterator[tuple[Popen[str] | None, str]]:
-    server_host, server_port = "127.0.0.1", 18080
-    server_url = f"http://{server_host}:{server_port}"
-
-    proc = subprocess.Popen(
-        ["./target/debug/draft-backend", "--host", server_host, "--port", str(server_port)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=RS_ROOT,
-        text=True,
-        env=proc_env,
-    )
-
-    assert proc.stdout
-    os.set_blocking(proc.stdout.fileno(), False)
-
-    wait_for_port(host=server_host, port=server_port)
-    yield proc, server_url
-
-    proc.send_signal(signal.SIGINT)
-    assert proc.wait() == 0
-
-
-@pytest.fixture(name="raw_server_daemon", autouse=True, scope="package")
-def raw_server_daemon_fixture(proc_env: dict[str, str]) -> Iterator[str]:
-    server_host, server_port = "127.0.0.1", 18081
-    server_url = f"http://{server_host}:{server_port}"
-
-    proc = subprocess.Popen(
-        ["./target/debug/draft-backend", "--host", server_host, "--port", str(server_port)],
-        cwd=RS_ROOT,
-        text=True,
-        env=proc_env,
-    )
-
-    wait_for_port(host=server_host, port=server_port)
-    yield server_url
-
-    proc.send_signal(signal.SIGINT)
-    assert proc.wait() == 0
 
 
 # --- httpx client fixtures ---
