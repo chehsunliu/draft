@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 itx-contract = { path = "../itx-contract" }
+async-trait = "0.1"

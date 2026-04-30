@@ -5,3 +5,9 @@ edition = "2024"
 
 [lib]
 path = "src/lib.rs"
+
+[dependencies]
+async-trait = "0.1"
+thiserror = "2"
+time = "0.3"
+uuid = { version = "1", features = ["v4"] }
