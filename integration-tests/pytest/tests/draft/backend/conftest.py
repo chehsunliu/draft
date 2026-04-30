@@ -1,3 +1,5 @@
+import os
+import signal
 from pathlib import Path
 from subprocess import Popen
 from typing import Iterator
@@ -7,7 +9,8 @@ import pytest
 import yaml
 
 from draft_testkit.openapi import OpenAPIValidator
-from draft_testkit.utils import read_all_logs
+from draft_testkit.profile import ArtifactProfile
+from draft_testkit.utils import read_all_logs, wait_for_port
 
 
 def load_openapi_schema():
@@ -22,6 +25,48 @@ def load_openapi_schema():
 
 
 openapi_schema = load_openapi_schema()
+
+
+@pytest.fixture(name="proc_env", scope="package")
+def proc_env_fixture() -> Iterator[dict[str, str]]:
+    yield {}
+
+
+@pytest.fixture(name="raw_logged_server_daemon", scope="package")
+def raw_logged_server_daemon_fixture(
+    proc_env: dict[str, str],
+    artifact_profile: ArtifactProfile,
+) -> Iterator[tuple[Popen[str] | None, str]]:
+    server_host, server_port = "127.0.0.1", 18080
+    server_url = f"http://{server_host}:{server_port}"
+
+    proc = artifact_profile.spawn_backend(proc_env, server_host, server_port, capture_stdout=True)
+
+    assert proc.stdout
+    os.set_blocking(proc.stdout.fileno(), False)
+
+    wait_for_port(host=server_host, port=server_port)
+    yield proc, server_url
+
+    proc.send_signal(signal.SIGINT)
+    assert proc.wait() == 0
+
+
+@pytest.fixture(name="raw_server_daemon", scope="package")
+def raw_server_daemon_fixture(
+    proc_env: dict[str, str],
+    artifact_profile: ArtifactProfile,
+) -> Iterator[str]:
+    server_host, server_port = "127.0.0.1", 18081
+    server_url = f"http://{server_host}:{server_port}"
+
+    proc = artifact_profile.spawn_backend(proc_env, server_host, server_port, capture_stdout=False)
+
+    wait_for_port(host=server_host, port=server_port)
+    yield server_url
+
+    proc.send_signal(signal.SIGINT)
+    assert proc.wait() == 0
 
 
 # --- httpx client fixtures ---
