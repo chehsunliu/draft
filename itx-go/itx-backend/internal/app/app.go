@@ -7,6 +7,9 @@ import (
 	"syscall"
 
 	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/feature/health"
+	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/feature/post"
+	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/middleware/auth"
+	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/middleware/itxctx"
 	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/middleware/wrap"
 	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/state"
 	"github.com/gin-gonic/gin"
@@ -17,9 +20,14 @@ func NewRouter(_ state.AppState) *gin.Engine {
 	r.HandleMethodNotAllowed = true
 	r.Use(gin.Recovery())
 	r.Use(wrap.Response())
+	r.Use(itxctx.Extract())
 
 	v1 := r.Group("/api/v1")
 	health.Register(v1)
+
+	protected := v1.Group("")
+	protected.Use(auth.RequireUser())
+	post.Register(protected)
 
 	return r
 }
