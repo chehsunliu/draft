@@ -5,7 +5,10 @@ edition = "2024"
 
 [dependencies]
 async-trait = "0.1"
-itx-contract = { path = "../itx-contract" }
+envy = "0.4.2"
+serde = { version = "1.0.228", features = ["derive"] }
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "mysql", "postgres", "uuid", "time"] }
 time = "0.3"
 uuid = { version = "1", features = ["v4"] }
+
+itx-contract = { path = "../itx-contract" }

@@ -9,7 +9,16 @@ on:
 
 jobs:
   rust-integration-test:
+    name: rust-integration-test (${{ matrix.profile }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: onprem
+            docker-init-services: postgres-init
+          - profile: aws
+            docker-init-services: mariadb-init
     defaults:
       run:
         working-directory: integration-tests/pytest
@@ -45,12 +54,32 @@ jobs:
         working-directory: itx-rs
         run: cargo build
 
+      - name: Start containers
+        run: docker compose up -d
+
+      - name: Wait for init services
+        run: docker compose wait ${{ matrix.docker-init-services }}
+
       - name: Run integration tests
         timeout-minutes: 5
         run: uv run pytest --durations=50
+        env:
+          ITX_TEST_PROFILE: ${{ matrix.profile }}
+
+      - name: Shutdown containers
+        run: docker compose down --remove-orphans -v --timeout 5 || true
 
   golang-integration-test:
+    name: golang-integration-test (${{ matrix.profile }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: onprem
+            docker-init-services: postgres-init
+          - profile: aws
+            docker-init-services: mariadb-init
     defaults:
       run:
         working-directory: integration-tests/pytest
@@ -90,6 +119,17 @@ jobs:
         working-directory: itx-go
         run: make build
 
+      - name: Start containers
+        run: docker compose up -d
+
+      - name: Wait for init services
+        run: docker compose wait ${{ matrix.docker-init-services }}
+
       - name: Run integration tests
         timeout-minutes: 5
         run: uv run pytest --durations=50
+        env:
+          ITX_TEST_PROFILE: ${{ matrix.profile }}
+
+      - name: Shutdown containers
+        run: docker compose down --remove-orphans -v --timeout 5 || true
