@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:18.3-alpine
+    restart: always
+    ports:
+      - "127.0.0.1:0:5432"
+    environment:
+      POSTGRES_DB: draft-db
+      POSTGRES_USER: draft-admin
+      POSTGRES_PASSWORD: "draft-admin"
+    command:
+      - "-c"
+      - "log_statement=all"
+
+  postgres-init:
+    image: flyway/flyway:12-alpine
+    depends_on:
+      - postgres
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: ../storage/postgres/sql
+        target: /flyway/sql
+    command:
+      - "-url=jdbc:postgresql://postgres:5432/draft-db"
+      - "-user=draft-admin"
+      - "-password=draft-admin"
+      - "-locations=filesystem:/flyway/sql"
+      - "-connectRetries=15"
+      - "migrate"
+
+  mariadb:
+    image: mariadb:11.4
+    restart: always
+    ports:
+      - "127.0.0.1:0:3306"
+    environment:
+      MARIADB_DATABASE: draft-db
+      MARIADB_USER: draft-admin
+      MARIADB_PASSWORD: "draft-admin"
+      MARIADB_ROOT_PASSWORD: "draft-admin"
+    command:
+      - "--general-log=1"
+      - "--general-log-file=/var/log/mysql/general.log"
+
+  mariadb-init:
+    image: flyway/flyway:12-alpine
+    depends_on:
+      - mariadb
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: ../storage/mariadb/sql
+        target: /flyway/sql
+    command:
+      - "-url=jdbc:mariadb://mariadb:3306/draft-db"
+      - "-user=draft-admin"
+      - "-password=draft-admin"
+      - "-locations=filesystem:/flyway/sql"
+      - "-connectRetries=15"
+      - "migrate"
