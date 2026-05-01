@@ -1,3 +1,4 @@
+use axum::extract::FromRef;
 use itx_contract::repo::factory::RepoFactory;
 use itx_contract::repo::post::PostRepo;
 use itx_impl::repo::mariadb::MariaDbRepoFactory;
@@ -21,5 +22,11 @@ impl AppState {
         let post_repo = repo_factory.create_post_repo();
 
         Ok(Self { post_repo })
+    }
+}
+
+impl FromRef<AppState> for Arc<dyn PostRepo> {
+    fn from_ref(app_state: &AppState) -> Self {
+        app_state.post_repo.clone()
     }
 }
