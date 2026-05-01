@@ -43,3 +43,14 @@ Run the same suite against the go backend:
 ```sh
 ITX_LANG=golang make test
 ```
+
+### Switching the infra profile
+
+Which infrastructure the suite runs against is controlled by `ITX_TEST_PROFILE` (default `aws`):
+
+```sh
+ITX_TEST_PROFILE=aws make test     # postgres
+ITX_TEST_PROFILE=onprem make test  # mariadb
+```
+
+A profile bundles a set of infra choices (database, and later queue/cache/etc.) into a single switch. The profile names — `aws`, `onprem` — are just labels for the bundles used in this demo; they don't constrain what you can run where (you can absolutely deploy mariadb on AWS in real life). They're packaged this way because flipping every piece (`ITX_DB_PROVIDER`, `ITX_*_HOST`, …) one by one would be tedious.
