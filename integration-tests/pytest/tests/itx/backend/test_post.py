@@ -1,4 +1,14 @@
 import httpx
+import pytest
+
+from itx_testkit.seeder.db.base import DbSeeder
+
+
+@pytest.fixture(autouse=True)
+async def setup(db_seeder: DbSeeder):
+    await db_seeder.reset_tables()
+
+    yield
 
 
 class TestListPosts:

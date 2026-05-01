@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 
 dependencies = [
+    "asyncmy>=0.2.11",
     "asyncpg>=0.31.0",
     "httpx>=0.28.0",
     "mypy>=1.20.0",

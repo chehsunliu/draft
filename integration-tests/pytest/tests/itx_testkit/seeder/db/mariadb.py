@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, async_sessionma
 from itx_testkit.seeder.db.base import DbReader, DbSeeder
 
 
-class PostgresDbReader(DbReader):
+class MariaDbDbReader(DbReader):
     def __init__(self, engine: AsyncEngine):
         self._session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -18,7 +18,7 @@ class PostgresDbReader(DbReader):
         pass
 
 
-class PostgresDbSeeder(DbSeeder):
+class MariaDbDbSeeder(DbSeeder):
     def __init__(self, engine: AsyncEngine, excluded_tables: list[str]) -> None:
         self._engine = engine
         self._excluded_tables: set[str] = set(excluded_tables)
@@ -26,7 +26,7 @@ class PostgresDbSeeder(DbSeeder):
         self._metadata = MetaData()
         self._tables: dict[str, Table] = {}
 
-    async def __aenter__(self) -> "PostgresDbSeeder":
+    async def __aenter__(self) -> "MariaDbDbSeeder":
         if not self._tables:
             async with self._engine.begin() as conn:
                 await conn.run_sync(self._metadata.reflect)
@@ -41,20 +41,22 @@ class PostgresDbSeeder(DbSeeder):
 
     async def reset_tables(self) -> None:
         async with self._engine.begin() as conn:
-            concatenated_table_names = ",".join([t.name for t in self._tables.values()])
-            await conn.execute(text(f"TRUNCATE TABLE {concatenated_table_names} RESTART IDENTITY CASCADE"))
+            await conn.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
+            for table in self._tables.values():
+                await conn.execute(text(f"TRUNCATE TABLE {table.name}"))
+            await conn.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
             await _show_banner(conn, "FINISH RESET TABLES")
 
     async def write_data(self, folder_path: Path) -> None:
         async with self._engine.begin() as conn:
             # Disable foreign key constraint check.
-            await conn.execute(text("SET session_replication_role = 'replica'"))
+            await conn.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
 
             for table in self._tables.values():
                 rows: list[dict[str, Any]] = []
 
-                gz_file_path = folder_path / f"postgres/{table.name}.json.gz"
-                file_path = folder_path / f"postgres/{table.name}.json"
+                gz_file_path = folder_path / f"mariadb/{table.name}.json.gz"
+                file_path = folder_path / f"mariadb/{table.name}.json"
 
                 if gz_file_path.exists():
                     rows = json.loads(gzip.decompress(gz_file_path.read_bytes()))
@@ -67,10 +69,11 @@ class PostgresDbSeeder(DbSeeder):
                 rows = [_convert(row, table=table) for row in rows]
                 await conn.execute(insert(table), rows)
 
+            await conn.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
             await _show_banner(conn, "FINISH LOAD DATA")
 
-    def reader(self) -> PostgresDbReader:
-        return PostgresDbReader(engine=self._engine)
+    def reader(self) -> MariaDbDbReader:
+        return MariaDbDbReader(engine=self._engine)
 
 
 async def _show_banner(conn: AsyncConnection, banner: str):
@@ -92,7 +95,7 @@ def _convert(row: dict[str, Any], *, table: Table) -> dict[str, Any]:
             new_row[column_name] = v
             continue
 
-        if str(column.type) == "TIMESTAMP":
+        if str(column.type) in ("DATETIME", "TIMESTAMP"):
             new_row[column_name] = datetime.fromisoformat(v)
         else:
             new_row[column_name] = v

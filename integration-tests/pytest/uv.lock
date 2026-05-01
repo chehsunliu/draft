@@ -28,6 +28,12 @@ wheels = [
 ]
 
 [[package]]
+name = "asyncmy"
+version = "0.2.11"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/3c/d8297584c40f3d1af55365026bcdca7844ecfea1d917ad19df48f8331a26/asyncmy-0.2.11.tar.gz", hash = "sha256:c3d65d959dde62c911e39ecd1ad0f1339a5e6929fc411d48cfc2f82846190bf4", size = 62865, upload-time = "2026-01-15T11:32:30.368Z" }
+
+[[package]]
 name = "asyncpg"
 version = "0.31.0"
 source = { registry = "https://pypi.org/simple" }
@@ -174,6 +180,7 @@ name = "itx-integration-tests"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "asyncmy" },
     { name = "asyncpg" },
     { name = "httpx" },
     { name = "mypy" },
@@ -194,6 +201,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "asyncmy", specifier = ">=0.2.11" },
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "httpx", specifier = ">=0.28.0" },
     { name = "mypy", specifier = ">=1.20.0" },

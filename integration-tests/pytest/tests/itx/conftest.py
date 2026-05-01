@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from itx_testkit.profile import ArtifactProfile
 from itx_testkit.seeder.db.base import DbSeeder
+from itx_testkit.seeder.db.mariadb import MariaDbDbSeeder
 from itx_testkit.seeder.db.postgres import PostgresDbSeeder
 
 # ----------------------------------------
@@ -57,23 +58,18 @@ def _get_host_port(service: str, *, container_port: int) -> str:
     raise RuntimeError(f"failed to get host port for {service}:{container_port} — is docker compose running?")
 
 
-mariadb_host = "127.0.0.1"
-mariadb_port = _get_host_port("mariadb", container_port=3306)
-mariadb_db_name = "itx-db"
-mariadb_user = "itx-admin"
-mariadb_password = "itx-admin"
-mariadb_url = f"postgresql+asyncpg://{mariadb_user}:{mariadb_password}@{mariadb_host}:{mariadb_port}/{mariadb_db_name}"
-
-postgres_host = "127.0.0.1"
-postgres_port = _get_host_port("postgres", container_port=5432)
-postgres_db_name = "itx-db"
-postgres_user = "itx-admin"
-postgres_password = "itx-admin"
-postgres_url = (
-    f"postgresql+asyncpg://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db_name}"
-)
+excluded_tables = ["flyway_schema_history"]
 
 if itx_test_profile == "aws":
+    postgres_host = "127.0.0.1"
+    postgres_port = _get_host_port("postgres", container_port=5432)
+    postgres_db_name = "itx-db"
+    postgres_user = "itx-admin"
+    postgres_password = "itx-admin"
+    postgres_url = (
+        f"postgresql+asyncpg://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db_name}"
+    )
+
     db_env: dict[str, str] = {
         "ITX_DB_PROVIDER": "postgres",
         "ITX_POSTGRES_HOST": postgres_host,
@@ -82,8 +78,18 @@ if itx_test_profile == "aws":
         "ITX_POSTGRES_USER": postgres_user,
         "ITX_POSTGRES_PASSWORD": postgres_password,
     }
-    engine = create_async_engine(url=postgres_url)
+    db_seeder: DbSeeder = PostgresDbSeeder(
+        engine=create_async_engine(url=postgres_url), excluded_tables=excluded_tables
+    )
+
 elif itx_test_profile == "onprem":
+    mariadb_host = "127.0.0.1"
+    mariadb_port = _get_host_port("mariadb", container_port=3306)
+    mariadb_db_name = "itx-db"
+    mariadb_user = "itx-admin"
+    mariadb_password = "itx-admin"
+    mariadb_url = f"mysql+asyncmy://{mariadb_user}:{mariadb_password}@{mariadb_host}:{mariadb_port}/{mariadb_db_name}"
+
     db_env = {
         "ITX_DB_PROVIDER": "mariadb",
         "ITX_MARIADB_HOST": mariadb_host,
@@ -92,7 +98,8 @@ elif itx_test_profile == "onprem":
         "ITX_MARIADB_USER": mariadb_user,
         "ITX_MARIADB_PASSWORD": mariadb_password,
     }
-    engine = create_async_engine(url=mariadb_url)
+    db_seeder = MariaDbDbSeeder(engine=create_async_engine(url=mariadb_url), excluded_tables=excluded_tables)
+
 else:
     raise ValueError(f"unknown YAAIRT_TEST_PROFILE: {itx_test_profile!r} (expected 'aws' or 'onprem')")
 
@@ -108,7 +115,7 @@ def artifact_profile_fixture() -> Iterator[ArtifactProfile]:
     yield artifact_profile
 
 
-@pytest.fixture(name="control_plane_env", scope="session")
+@pytest.fixture(name="control_plane_env", scope="package")
 def control_plane_env_fixture() -> Iterator[dict[str, str]]:
     env: dict[str, str] = {
         **db_env,
@@ -116,13 +123,13 @@ def control_plane_env_fixture() -> Iterator[dict[str, str]]:
     yield env
 
 
-@pytest.fixture(name="compute_plane_env", scope="session")
+@pytest.fixture(name="compute_plane_env", scope="package")
 def compute_plane_env_fixture() -> Iterator[dict[str, str]]:
     env: dict[str, str] = {}
     yield env
 
 
-@pytest.fixture
-async def db_seeder() -> AsyncGenerator[DbSeeder]:
-    async with PostgresDbSeeder(engine=engine) as seeder:
+@pytest.fixture(name="db_seeder")
+async def db_seeder_fixture() -> AsyncGenerator[DbSeeder]:
+    async with db_seeder as seeder:
         yield seeder
