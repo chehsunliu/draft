@@ -16,9 +16,9 @@ jobs:
       matrix:
         include:
           - profile: onprem
-            docker-init-services: postgres-init
-          - profile: aws
             docker-init-services: mariadb-init
+          - profile: aws
+            docker-init-services: postgres-init
     defaults:
       run:
         working-directory: integration-tests/pytest
@@ -77,9 +77,9 @@ jobs:
       matrix:
         include:
           - profile: onprem
-            docker-init-services: postgres-init
-          - profile: aws
             docker-init-services: mariadb-init
+          - profile: aws
+            docker-init-services: postgres-init
     defaults:
       run:
         working-directory: integration-tests/pytest
