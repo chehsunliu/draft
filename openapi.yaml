@@ -64,6 +64,12 @@ paths:
               example:
                 error:
                   message: Unauthorized
+        "5XX":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   parameters:
     ItxUserId:
