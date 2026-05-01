@@ -37,7 +37,7 @@ class MariaDbDbSeeder(DbSeeder):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        await self._engine.dispose()
+        pass
 
     async def reset_tables(self) -> None:
         async with self._engine.begin() as conn:
