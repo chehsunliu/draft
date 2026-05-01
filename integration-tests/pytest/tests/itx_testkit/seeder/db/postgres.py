@@ -88,15 +88,11 @@ class PostgresDbSeeder(DbSeeder):
             for table in self._tables.values():
                 if "id" not in table.columns:
                     continue
-                seq_name = (
-                    await conn.execute(text(f"SELECT pg_get_serial_sequence('{table.name}', 'id')"))
-                ).scalar()
+                seq_name = (await conn.execute(text(f"SELECT pg_get_serial_sequence('{table.name}', 'id')"))).scalar()
                 if seq_name is None:
                     continue
                 await conn.execute(
-                    text(
-                        f"SELECT setval('{seq_name}', COALESCE((SELECT MAX(id) FROM {table.name}), 1), true)"
-                    )
+                    text(f"SELECT setval('{seq_name}', COALESCE((SELECT MAX(id) FROM {table.name}), 1), true)")
                 )
 
             await _show_banner(conn, "FINISH LOAD DATA")

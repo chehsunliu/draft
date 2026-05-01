@@ -82,9 +82,7 @@ class TestGetPost:
             }
         }
 
-    async def test_404_for_post_not_owned(
-        self, strict_httpx_client: httpx.Client, db_seeder: DbSeeder, datadir: Path
-    ):
+    async def test_404_for_post_not_owned(self, strict_httpx_client: httpx.Client, db_seeder: DbSeeder, datadir: Path):
         await db_seeder.write_data(datadir / "20260502_simple")
 
         r = strict_httpx_client.get("/api/v1/posts/4", headers={"X-Itx-User-Id": user_id})
@@ -166,9 +164,7 @@ class TestUpdatePost:
     ):
         await db_seeder.write_data(datadir / "20260502_simple")
 
-        r = strict_httpx_client.patch(
-            "/api/v1/posts/2", headers={"X-Itx-User-Id": user_id}, json={"body": "New body"}
-        )
+        r = strict_httpx_client.patch("/api/v1/posts/2", headers={"X-Itx-User-Id": user_id}, json={"body": "New body"})
         assert r.status_code == 200, r.text
 
         stored = await db_seeder.reader().get_post(2, user_id)
@@ -176,14 +172,10 @@ class TestUpdatePost:
         assert stored["body"] == "New body"
         assert stored["tags"] == ["design", "rust"]
 
-    async def test_404_for_post_not_owned(
-        self, strict_httpx_client: httpx.Client, db_seeder: DbSeeder, datadir: Path
-    ):
+    async def test_404_for_post_not_owned(self, strict_httpx_client: httpx.Client, db_seeder: DbSeeder, datadir: Path):
         await db_seeder.write_data(datadir / "20260502_simple")
 
-        r = strict_httpx_client.patch(
-            "/api/v1/posts/4", headers={"X-Itx-User-Id": user_id}, json={"title": "hijacked"}
-        )
+        r = strict_httpx_client.patch("/api/v1/posts/4", headers={"X-Itx-User-Id": user_id}, json={"title": "hijacked"})
         assert r.status_code == 404, r.text
         assert r.json() == NOT_FOUND_BODY
 
@@ -200,9 +192,7 @@ class TestDeletePost:
         assert r.status_code == 404
         assert r.json() == NOT_FOUND_BODY
 
-    async def test_404_for_post_not_owned(
-        self, strict_httpx_client: httpx.Client, db_seeder: DbSeeder, datadir: Path
-    ):
+    async def test_404_for_post_not_owned(self, strict_httpx_client: httpx.Client, db_seeder: DbSeeder, datadir: Path):
         await db_seeder.write_data(datadir / "20260502_simple")
 
         r = strict_httpx_client.delete("/api/v1/posts/4", headers={"X-Itx-User-Id": user_id})
