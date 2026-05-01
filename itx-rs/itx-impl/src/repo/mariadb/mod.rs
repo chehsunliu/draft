@@ -3,7 +3,7 @@ use std::sync::Arc;
 use itx_contract::repo::factory::RepoFactory;
 use itx_contract::repo::post::PostRepo;
 use sqlx::MySqlPool;
-use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};
+use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions, MySqlSslMode};
 
 use crate::repo::mariadb::post::MariaDbPostRepo;
 
@@ -33,7 +33,8 @@ impl MariaDbRepoFactory {
             .port(config.port)
             .database(&config.db_name)
             .username(&config.user)
-            .password(&config.password);
+            .password(&config.password)
+            .ssl_mode(MySqlSslMode::Disabled);
 
         let pool = MySqlPoolOptions::new()
             .max_connections(10)
