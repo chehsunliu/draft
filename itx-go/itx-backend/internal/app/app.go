@@ -15,7 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(_ state.AppState) *gin.Engine {
+func NewRouter(s state.AppState) *gin.Engine {
 	r := gin.New()
 	r.HandleMethodNotAllowed = true
 	r.Use(gin.Recovery())
@@ -27,7 +27,7 @@ func NewRouter(_ state.AppState) *gin.Engine {
 
 	protected := v1.Group("")
 	protected.Use(auth.RequireUser())
-	post.Register(protected)
+	post.NewHandler(s.PostRepo).Register(protected)
 
 	return r
 }

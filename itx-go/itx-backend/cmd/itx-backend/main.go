@@ -35,7 +35,11 @@ func main() {
 
 func run(host string, port int) error {
 	addr := fmt.Sprintf("%s:%d", host, port)
-	router := app.NewRouter(state.AppState{})
+	s, err := state.FromEnv()
+	if err != nil {
+		return fmt.Errorf("init state: %w", err)
+	}
+	router := app.NewRouter(s)
 
 	srv := &http.Server{
 		Addr:    addr,
