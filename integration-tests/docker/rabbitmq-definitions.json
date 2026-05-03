@@ -43,6 +43,26 @@
       }
     },
     {
+      "name": "test-itx-compute-standard",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "test-itx-compute-standard-dlq"
+      }
+    },
+    {
+      "name": "test-itx-compute-premium",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "test-itx-compute-premium-dlq"
+      }
+    },
+    {
       "name": "test-itx-control-standard-dlq",
       "vhost": "/",
       "durable": true,
@@ -51,6 +71,20 @@
     },
     {
       "name": "test-itx-control-premium-dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "test-itx-compute-standard-dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "test-itx-compute-premium-dlq",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
