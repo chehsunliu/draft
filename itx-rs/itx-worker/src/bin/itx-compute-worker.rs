@@ -3,9 +3,9 @@ use std::sync::Arc;
 
 use clap::Parser;
 use itx_contract::queue::MessageHandler;
-use itx_impl::worker::run;
 use itx_worker::compute::dispatcher::ComputeDispatcher;
 use itx_worker::compute::state::ComputeWorkerState;
+use itx_worker::run::run;
 use tracing::Level;
 
 #[derive(Parser, Debug)]
