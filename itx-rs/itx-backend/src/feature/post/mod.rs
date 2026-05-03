@@ -5,7 +5,7 @@ use crate::middleware::context::ItxContext;
 use crate::state::AppState;
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
-use axum::routing::get;
+use axum::routing::{delete, get, patch, post};
 use axum::{Extension, Json, Router};
 use itx_contract::repo::post::{PostId, PostRepo};
 use serde::Deserialize;
@@ -125,6 +125,9 @@ async fn delete_post(
 
 pub fn create_router() -> Router<AppState> {
     Router::new()
-        .route("/", get(list_posts).post(create_post))
-        .route("/{id}", get(get_post).patch(update_post).delete(delete_post))
+        .route("/", get(list_posts))
+        .route("/", post(create_post))
+        .route("/{id}", get(get_post))
+        .route("/{id}", patch(update_post))
+        .route("/{id}", delete(delete_post))
 }

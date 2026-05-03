@@ -4,7 +4,7 @@ use crate::middleware::context::ItxContext;
 use crate::state::AppState;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::routing::put;
+use axum::routing::{delete, put};
 use axum::{Extension, Router};
 use itx_contract::repo::subscription::SubscriptionRepo;
 use itx_contract::repo::user::UserRepo;
@@ -50,5 +50,7 @@ async fn unsubscribe(
 }
 
 pub fn create_router() -> Router<AppState> {
-    Router::new().route("/{author_id}", put(subscribe).delete(unsubscribe))
+    Router::new()
+        .route("/{author_id}", put(subscribe))
+        .route("/{author_id}", delete(unsubscribe))
 }
