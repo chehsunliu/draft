@@ -3,8 +3,8 @@ use itx_contract::repo::factory::RepoFactory;
 use itx_contract::repo::post::PostRepo;
 use itx_contract::repo::subscription::SubscriptionRepo;
 use itx_contract::repo::user::UserRepo;
-use itx_impl::repo::mariadb::MariaDbRepoFactory;
-use itx_impl::repo::postgres::PostgresRepoFactory;
+use itx_impl::repo::mariadb::factory::MariaDbRepoFactory;
+use itx_impl::repo::postgres::factory::PostgresRepoFactory;
 use std::error::Error;
 use std::sync::Arc;
 

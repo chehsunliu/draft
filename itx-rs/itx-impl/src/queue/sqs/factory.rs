@@ -16,7 +16,7 @@ struct SqsMessageQueueFactoryConfig {
 }
 
 pub struct SqsMessageQueueFactory {
-    pub client: Client,
+    client: Client,
     config: SqsMessageQueueFactoryConfig,
 }
 

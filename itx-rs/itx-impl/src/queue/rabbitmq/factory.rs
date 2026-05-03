@@ -19,7 +19,7 @@ struct RabbitMessageQueueFactoryConfig {
 }
 
 pub struct RabbitMessageQueueFactory {
-    pub conn: Arc<Connection>,
+    conn: Arc<Connection>,
     config: RabbitMessageQueueFactoryConfig,
 }
 
