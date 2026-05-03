@@ -3,7 +3,6 @@ import subprocess
 from pathlib import Path
 from typing import AsyncGenerator, Iterator
 
-import boto3
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -99,14 +98,8 @@ if itx_test_profile == "aws":
 
     sqs_port = _get_host_port("sqs", container_port=9324)
     sqs_endpoint = f"http://127.0.0.1:{sqs_port}"
-    _bootstrap_sqs = boto3.client(
-        "sqs",
-        endpoint_url=sqs_endpoint,
-        region_name="us-east-1",
-        aws_access_key_id="x",
-        aws_secret_access_key="x",
-    )
-    queue_urls = {key: _bootstrap_sqs.get_queue_url(QueueName=name)["QueueUrl"] for key, name in _queue_keys.items()}
+    # ElasticMQ default URL format: <endpoint>/<account_id>/<queue_name>, account=000000000000.
+    queue_urls = {key: f"{sqs_endpoint}/000000000000/{name}" for key, name in _queue_keys.items()}
 
     queue_env: dict[str, str] = {
         "ITX_QUEUE_PROVIDER": "sqs",
@@ -200,3 +193,9 @@ async def db_seeder_fixture() -> AsyncGenerator[DbSeeder]:
 async def queue_seeder_fixture() -> AsyncGenerator[QueueSeeder]:
     async with queue_seeder as seeder:
         yield seeder
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def _close_queue_seeder() -> AsyncGenerator[None]:
+    yield
+    await queue_seeder.close()

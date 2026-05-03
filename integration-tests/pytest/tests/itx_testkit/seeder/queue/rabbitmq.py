@@ -42,8 +42,14 @@ class RabbitQueueSeeder(QueueSeeder):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        # Keep the connection across tests for speed; closed at process exit.
+        # Keep the connection across tests for speed; the test session calls `close()` once at teardown.
         pass
+
+    async def close(self) -> None:
+        if self._connection is not None:
+            await self._connection.close()
+            self._connection = None
+            self._channel = None
 
     async def reset(self) -> None:
         assert self._channel is not None
