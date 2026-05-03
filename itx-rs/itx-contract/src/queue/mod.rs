@@ -1,5 +1,6 @@
 pub mod error;
 pub mod factory;
+pub mod message;
 
 use std::sync::Arc;
 
