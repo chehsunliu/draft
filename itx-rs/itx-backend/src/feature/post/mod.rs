@@ -7,6 +7,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::routing::{delete, get, patch, post};
 use axum::{Extension, Json, Router};
+use itx_contract::queue::MessageQueue;
 use itx_contract::repo::post::{PostId, PostRepo};
 use serde::Deserialize;
 use std::sync::Arc;
@@ -67,10 +68,11 @@ struct CreatePostBody {
 
 async fn create_post(
     State(post_repo): State<Arc<dyn PostRepo>>,
+    State(control_standard_queue): State<Arc<dyn MessageQueue>>,
     Extension(context): Extension<ItxContext>,
     Json(body): Json<CreatePostBody>,
 ) -> Result<(StatusCode, Json<PostDto>), BackendError> {
-    let use_case = create_post::CreatePostUseCase::new(post_repo);
+    let use_case = create_post::CreatePostUseCase::new(post_repo, control_standard_queue);
     let output = use_case
         .execute(create_post::ExecuteParams {
             user_id: context.user_id.unwrap(),

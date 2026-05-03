@@ -29,7 +29,7 @@ func NewRouter(s state.AppState) *gin.Engine {
 
 	protected := v1.Group("")
 	protected.Use(auth.RequireUser())
-	post.NewHandler(s.PostRepo).Register(protected)
+	post.NewHandler(s.PostRepo, s.ControlStandardQueue).Register(protected)
 	user.NewHandler(s.UserRepo, s.SubscriptionRepo).Register(protected)
 	subscription.NewHandler(s.UserRepo, s.SubscriptionRepo).Register(protected)
 

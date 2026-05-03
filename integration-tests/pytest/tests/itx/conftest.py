@@ -10,6 +10,9 @@ from itx_testkit.profile import ArtifactProfile
 from itx_testkit.seeder.db.base import DbSeeder
 from itx_testkit.seeder.db.mariadb import MariaDbDbSeeder
 from itx_testkit.seeder.db.postgres import PostgresDbSeeder
+from itx_testkit.seeder.queue.base import QueueSeeder
+from itx_testkit.seeder.queue.rabbitmq import RabbitQueueSeeder
+from itx_testkit.seeder.queue.sqs import SqsQueueSeeder
 
 # ----------------------------------------
 # Artifacts
@@ -60,6 +63,17 @@ def _get_host_port(service: str, *, container_port: int) -> str:
 
 excluded_tables = ["flyway_schema_history"]
 
+# Logical key → broker-specific name. Same set for both profiles.
+_queue_keys = {
+    "control_standard": "test-itx-control-standard",
+    "control_premium": "test-itx-control-premium",
+    "compute_standard": "test-itx-compute-standard",
+    "compute_premium": "test-itx-compute-premium",
+}
+
+
+queue_seeder: QueueSeeder
+
 if itx_test_profile == "aws":
     postgres_host = "127.0.0.1"
     postgres_port = _get_host_port("postgres", container_port=5432)
@@ -82,6 +96,24 @@ if itx_test_profile == "aws":
         engine=create_async_engine(url=postgres_url), excluded_tables=excluded_tables
     )
 
+    sqs_port = _get_host_port("sqs", container_port=9324)
+    sqs_endpoint = f"http://127.0.0.1:{sqs_port}"
+    # ElasticMQ default URL format: <endpoint>/<account_id>/<queue_name>, account=000000000000.
+    queue_urls = {key: f"{sqs_endpoint}/000000000000/{name}" for key, name in _queue_keys.items()}
+
+    queue_env: dict[str, str] = {
+        "ITX_QUEUE_PROVIDER": "sqs",
+        "AWS_REGION": "us-east-1",
+        "AWS_ACCESS_KEY_ID": "x",
+        "AWS_SECRET_ACCESS_KEY": "x",
+        "ITX_SQS_LOCAL_ENDPOINT_URL": sqs_endpoint,
+        "ITX_SQS_CONTROL_STANDARD_QUEUE_URL": queue_urls["control_standard"],
+        "ITX_SQS_CONTROL_PREMIUM_QUEUE_URL": queue_urls["control_premium"],
+        "ITX_SQS_COMPUTE_STANDARD_QUEUE_URL": queue_urls["compute_standard"],
+        "ITX_SQS_COMPUTE_PREMIUM_QUEUE_URL": queue_urls["compute_premium"],
+    }
+    queue_seeder = SqsQueueSeeder(endpoint_url=sqs_endpoint, queue_urls=queue_urls)
+
 elif itx_test_profile == "onprem":
     mariadb_host = "127.0.0.1"
     mariadb_port = _get_host_port("mariadb", container_port=3306)
@@ -99,6 +131,27 @@ elif itx_test_profile == "onprem":
         "ITX_MARIADB_PASSWORD": mariadb_password,
     }
     db_seeder = MariaDbDbSeeder(engine=create_async_engine(url=mariadb_url), excluded_tables=excluded_tables)
+
+    rabbit_host = "127.0.0.1"
+    rabbit_port = _get_host_port("rabbitmq", container_port=5672)
+    rabbit_user = "itx-admin"
+    rabbit_password = "itx-admin"
+
+    queue_env = {
+        "ITX_QUEUE_PROVIDER": "rabbitmq",
+        "ITX_RABBITMQ_HOST": rabbit_host,
+        "ITX_RABBITMQ_PORT": rabbit_port,
+        "ITX_RABBITMQ_USER": rabbit_user,
+        "ITX_RABBITMQ_PASSWORD": rabbit_password,
+        "ITX_RABBITMQ_CONTROL_STANDARD_QUEUE": _queue_keys["control_standard"],
+        "ITX_RABBITMQ_CONTROL_PREMIUM_QUEUE": _queue_keys["control_premium"],
+        "ITX_RABBITMQ_COMPUTE_STANDARD_QUEUE": _queue_keys["compute_standard"],
+        "ITX_RABBITMQ_COMPUTE_PREMIUM_QUEUE": _queue_keys["compute_premium"],
+    }
+    queue_seeder = RabbitQueueSeeder(
+        url=f"amqp://{rabbit_user}:{rabbit_password}@{rabbit_host}:{rabbit_port}/%2F",
+        queue_names=_queue_keys,
+    )
 
 else:
     raise ValueError(f"unknown YAAIRT_TEST_PROFILE: {itx_test_profile!r} (expected 'aws' or 'onprem')")
@@ -119,6 +172,7 @@ def artifact_profile_fixture() -> Iterator[ArtifactProfile]:
 def control_plane_env_fixture() -> Iterator[dict[str, str]]:
     env: dict[str, str] = {
         **db_env,
+        **queue_env,
     }
     yield env
 
@@ -133,3 +187,15 @@ def compute_plane_env_fixture() -> Iterator[dict[str, str]]:
 async def db_seeder_fixture() -> AsyncGenerator[DbSeeder]:
     async with db_seeder as seeder:
         yield seeder
+
+
+@pytest.fixture(name="queue_seeder")
+async def queue_seeder_fixture() -> AsyncGenerator[QueueSeeder]:
+    async with queue_seeder as seeder:
+        yield seeder
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def _close_queue_seeder() -> AsyncGenerator[None]:
+    yield
+    await queue_seeder.close()

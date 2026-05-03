@@ -5,17 +5,20 @@ import httpx
 import pytest
 
 from itx_testkit.seeder.db.base import DbSeeder
+from itx_testkit.seeder.queue.base import QueueSeeder
 
 user_id = "11111111-1111-1111-1111-111111111111"
+user_email = "alice@example.com"
 other_user_id = "22222222-2222-2222-2222-222222222222"
 
 NOT_FOUND_BODY = {"error": {"message": "not found"}}
 
 
 @pytest.fixture(autouse=True)
-async def setup(db_seeder: DbSeeder, datadir: Path):
+async def setup(db_seeder: DbSeeder, queue_seeder: QueueSeeder, datadir: Path):
     await db_seeder.reset_tables()
     await db_seeder.write_data(datadir / "baseline")
+    await queue_seeder.reset()
 
     yield
 
@@ -97,7 +100,9 @@ class TestGetPost:
 
 
 class TestCreatePost:
-    async def test_creates_post_with_tags(self, strict_httpx_client: httpx.Client, db_seeder: DbSeeder):
+    async def test_creates_post_with_tags(
+        self, strict_httpx_client: httpx.Client, db_seeder: DbSeeder, queue_seeder: QueueSeeder
+    ):
         body = {"title": "Hello", "body": "World", "tags": ["intro", "draft"]}
 
         r = strict_httpx_client.post("/api/v1/posts", headers={"X-Itx-User-Id": user_id}, json=body)
@@ -123,6 +128,9 @@ class TestCreatePost:
         assert stored["body"] == "World"
         assert sorted(stored["tags"]) == ["draft", "intro"]
         assert stored["author_id"] == uuid.UUID(user_id)
+
+        message = await queue_seeder.reader("control_standard").receive_one(timeout_seconds=5)
+        assert message == {"type": "post.created", "postId": post["id"], "authorId": user_id}
 
     async def test_creates_post_without_tags(self, strict_httpx_client: httpx.Client, db_seeder: DbSeeder):
         body = {"title": "Plain", "body": "No tags"}

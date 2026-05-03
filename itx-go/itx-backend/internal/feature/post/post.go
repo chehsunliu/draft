@@ -1,12 +1,15 @@
 package post
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/middleware/itxctx"
+	contractqueue "github.com/chehsunliu/itx/itx-go/itx-contract/queue"
+	contractmessage "github.com/chehsunliu/itx/itx-go/itx-contract/queue/message"
 	contractpost "github.com/chehsunliu/itx/itx-go/itx-contract/repo/post"
 	"github.com/gin-gonic/gin"
 )
@@ -57,11 +60,12 @@ type updateBody struct {
 }
 
 type Handler struct {
-	repo contractpost.Repo
+	repo                 contractpost.Repo
+	controlStandardQueue contractqueue.MessageQueue
 }
 
-func NewHandler(repo contractpost.Repo) *Handler {
-	return &Handler{repo: repo}
+func NewHandler(repo contractpost.Repo, controlStandardQueue contractqueue.MessageQueue) *Handler {
+	return &Handler{repo: repo, controlStandardQueue: controlStandardQueue}
 }
 
 func parseID(c *gin.Context) (int64, bool) {
@@ -152,6 +156,19 @@ func (h *Handler) create(c *gin.Context) {
 		c.Abort()
 		return
 	}
+
+	msgBytes, err := json.Marshal(contractmessage.NewPostCreated(p.ID, p.AuthorID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.Abort()
+		return
+	}
+	if err := h.controlStandardQueue.Publish(c.Request.Context(), string(msgBytes)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.Abort()
+		return
+	}
+
 	c.JSON(http.StatusCreated, toDto(p))
 }
 

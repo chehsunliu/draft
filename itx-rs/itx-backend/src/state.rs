@@ -1,8 +1,12 @@
 use axum::extract::FromRef;
+use itx_contract::queue::MessageQueue;
+use itx_contract::queue::factory::MessageQueueFactory;
 use itx_contract::repo::factory::RepoFactory;
 use itx_contract::repo::post::PostRepo;
 use itx_contract::repo::subscription::SubscriptionRepo;
 use itx_contract::repo::user::UserRepo;
+use itx_impl::queue::rabbitmq::factory::RabbitMessageQueueFactory;
+use itx_impl::queue::sqs::factory::SqsMessageQueueFactory;
 use itx_impl::repo::mariadb::factory::MariaDbRepoFactory;
 use itx_impl::repo::postgres::factory::PostgresRepoFactory;
 use std::error::Error;
@@ -13,6 +17,7 @@ pub struct AppState {
     pub post_repo: Arc<dyn PostRepo>,
     pub user_repo: Arc<dyn UserRepo>,
     pub subscription_repo: Arc<dyn SubscriptionRepo>,
+    pub control_standard_queue: Arc<dyn MessageQueue>,
 }
 
 impl AppState {
@@ -27,10 +32,19 @@ impl AppState {
         let user_repo = repo_factory.create_user_repo();
         let subscription_repo = repo_factory.create_subscription_repo();
 
+        let queue_factory: Arc<dyn MessageQueueFactory> =
+            match std::env::var("ITX_QUEUE_PROVIDER").as_deref().unwrap_or("sqs") {
+                "sqs" => Arc::new(SqsMessageQueueFactory::from_env().await),
+                "rabbitmq" => Arc::new(RabbitMessageQueueFactory::from_env().await?),
+                other => panic!("unknown ITX_QUEUE_PROVIDER: {other}"),
+            };
+        let control_standard_queue = queue_factory.create_control_standard_queue();
+
         Ok(Self {
             post_repo,
             user_repo,
             subscription_repo,
+            control_standard_queue,
         })
     }
 }
@@ -50,5 +64,11 @@ impl FromRef<AppState> for Arc<dyn UserRepo> {
 impl FromRef<AppState> for Arc<dyn SubscriptionRepo> {
     fn from_ref(app_state: &AppState) -> Self {
         app_state.subscription_repo.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<dyn MessageQueue> {
+    fn from_ref(app_state: &AppState) -> Self {
+        app_state.control_standard_queue.clone()
     }
 }

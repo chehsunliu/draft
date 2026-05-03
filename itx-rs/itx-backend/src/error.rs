@@ -2,6 +2,7 @@ use axum::Json;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
+use itx_contract::queue::error::QueueError;
 use itx_contract::repo::error::RepoError;
 
 #[derive(Debug, thiserror::Error)]
@@ -19,6 +20,14 @@ impl From<RepoError> for BackendError {
         match err {
             RepoError::NotFound => BackendError::NotFound,
             RepoError::Unknown(s) => BackendError::Unknown(s),
+        }
+    }
+}
+
+impl From<QueueError> for BackendError {
+    fn from(err: QueueError) -> Self {
+        match err {
+            QueueError::Unknown(s) => BackendError::Unknown(s),
         }
     }
 }
