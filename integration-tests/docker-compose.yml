@@ -59,3 +59,40 @@ services:
       - "-locations=filesystem:/flyway/sql"
       - "-connectRetries=15"
       - "migrate"
+
+  sqs:
+    image: softwaremill/elasticmq-native:latest
+    restart: always
+    ports:
+      - "127.0.0.1:0:9324"
+      - "127.0.0.1:0:9325"
+    volumes:
+      - type: bind
+        source: ./docker/elasticmq.conf
+        target: /opt/elasticmq.conf
+
+  sqs-ui:
+    image: softwaremill/elasticmq-ui:latest
+    ports:
+      - "127.0.0.1:0:3000"
+    environment:
+      SQS_ENDPOINT: http://sqs:9324
+    depends_on:
+      - sqs
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    restart: always
+    ports:
+      - "127.0.0.1:0:5672"
+      - "127.0.0.1:0:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: itx-admin
+      RABBITMQ_DEFAULT_PASS: itx-admin
+    volumes:
+      - type: bind
+        source: ./docker/rabbitmq.conf
+        target: /etc/rabbitmq/rabbitmq.conf
+      - type: bind
+        source: ./docker/rabbitmq-definitions.json
+        target: /etc/rabbitmq/definitions.json
