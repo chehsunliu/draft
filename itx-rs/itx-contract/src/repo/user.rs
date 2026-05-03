@@ -19,4 +19,7 @@ pub struct UpsertParams {
 pub trait UserRepo: Send + Sync {
     /// Inserts the user if missing, then returns the current row.
     async fn upsert(&self, params: UpsertParams) -> Result<User, RepoError>;
+
+    /// Returns `RepoError::NotFound` if no user with `id` exists.
+    async fn get(&self, id: Uuid) -> Result<User, RepoError>;
 }

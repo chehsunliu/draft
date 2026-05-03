@@ -39,3 +39,11 @@ class User(Base):
 
     id: Mapped[str] = mapped_column(CHAR(36), primary_key=True)
     email: Mapped[str] = mapped_column(String(254))
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    subscriber_id: Mapped[str] = mapped_column(CHAR(36), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    author_id: Mapped[str] = mapped_column(CHAR(36), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)

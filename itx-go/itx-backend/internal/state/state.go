@@ -6,14 +6,16 @@ import (
 
 	"github.com/chehsunliu/itx/itx-go/itx-contract/repo/factory"
 	"github.com/chehsunliu/itx/itx-go/itx-contract/repo/post"
+	"github.com/chehsunliu/itx/itx-go/itx-contract/repo/subscription"
 	"github.com/chehsunliu/itx/itx-go/itx-contract/repo/user"
 	"github.com/chehsunliu/itx/itx-go/itx-impl/repo/mariadb"
 	"github.com/chehsunliu/itx/itx-go/itx-impl/repo/postgres"
 )
 
 type AppState struct {
-	PostRepo post.Repo
-	UserRepo user.Repo
+	PostRepo         post.Repo
+	UserRepo         user.Repo
+	SubscriptionRepo subscription.Repo
 }
 
 func FromEnv() (AppState, error) {
@@ -41,7 +43,8 @@ func FromEnv() (AppState, error) {
 	}
 
 	return AppState{
-		PostRepo: repoFactory.CreatePostRepo(),
-		UserRepo: repoFactory.CreateUserRepo(),
+		PostRepo:         repoFactory.CreatePostRepo(),
+		UserRepo:         repoFactory.CreateUserRepo(),
+		SubscriptionRepo: repoFactory.CreateSubscriptionRepo(),
 	}, nil
 }

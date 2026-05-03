@@ -7,6 +7,9 @@ class DbReader(ABC):
     @abstractmethod
     async def get_post(self, post_id: int, user_id: str) -> dict[str, Any]: ...
 
+    @abstractmethod
+    async def is_subscribed(self, subscriber_id: str, author_id: str) -> bool: ...
+
 
 class DbSeeder(ABC):
     @abstractmethod

@@ -21,3 +21,11 @@ CREATE TABLE post_tags (
     tag_id   BIGINT NOT NULL REFERENCES tags  (id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, tag_id)
 );
+
+CREATE TABLE subscriptions (
+    subscriber_id UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    author_id     UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (subscriber_id, author_id),
+    CHECK (subscriber_id <> author_id)
+);

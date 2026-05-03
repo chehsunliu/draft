@@ -31,3 +31,13 @@ CREATE TABLE post_tags (
     CONSTRAINT fk_post_tags_tag
         FOREIGN KEY (tag_id)  REFERENCES tags  (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE subscriptions (
+    subscriber_id CHAR(36)  NOT NULL,
+    author_id     CHAR(36)  NOT NULL,
+    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (subscriber_id, author_id),
+    CONSTRAINT fk_sub_subscriber FOREIGN KEY (subscriber_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_sub_author     FOREIGN KEY (author_id)     REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT chk_sub_self      CHECK (subscriber_id <> author_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, async_sessionma
 from sqlalchemy.orm import selectinload
 
 from itx_testkit.seeder.db.base import DbReader, DbSeeder
-from itx_testkit.seeder.db.postgres_tables import Post
+from itx_testkit.seeder.db.postgres_tables import Post, Subscription
 
 
 class PostgresDbReader(DbReader):
@@ -34,6 +34,14 @@ class PostgresDbReader(DbReader):
             "tags": [t.name for t in post.tags],
             "created_at": post.created_at,
         }
+
+    async def is_subscribed(self, subscriber_id: str, author_id: str) -> bool:
+        async with self._session_factory() as session:
+            stmt = select(Subscription).where(
+                Subscription.subscriber_id == uuid.UUID(subscriber_id),
+                Subscription.author_id == uuid.UUID(author_id),
+            )
+            return (await session.execute(stmt)).scalar_one_or_none() is not None
 
 
 class PostgresDbSeeder(DbSeeder):

@@ -28,6 +28,50 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "5XX":
           $ref: "#/components/responses/ServerError"
+  /api/v1/users/{id}/subscriptions:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The author the caller wants to subscribe to or unsubscribe from.
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Subscribe to an author (idempotent)
+      operationId: subscribe
+      parameters:
+        - $ref: "#/components/parameters/ItxUserId"
+        - $ref: "#/components/parameters/ItxUserEmail"
+        - $ref: "#/components/parameters/ItxRequestId"
+      responses:
+        "204":
+          description: Subscription created (or already existed)
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "5XX":
+          $ref: "#/components/responses/ServerError"
+    delete:
+      summary: Unsubscribe from an author (idempotent)
+      operationId: unsubscribe
+      parameters:
+        - $ref: "#/components/parameters/ItxUserId"
+        - $ref: "#/components/parameters/ItxRequestId"
+      responses:
+        "204":
+          description: Subscription removed (or did not exist)
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "5XX":
+          $ref: "#/components/responses/ServerError"
   /api/v1/health:
     get:
       summary: Health check
@@ -205,6 +249,12 @@ components:
               message: Unauthorized
     NotFound:
       description: Post not found or not owned by the caller
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    BadRequest:
+      description: Bad request
       content:
         application/json:
           schema:

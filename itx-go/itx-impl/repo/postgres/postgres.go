@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/chehsunliu/itx/itx-go/itx-contract/repo/post"
+	"github.com/chehsunliu/itx/itx-go/itx-contract/repo/subscription"
 	"github.com/chehsunliu/itx/itx-go/itx-contract/repo/user"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -37,4 +38,8 @@ func (f *RepoFactory) CreatePostRepo() post.Repo {
 
 func (f *RepoFactory) CreateUserRepo() user.Repo {
 	return &userRepo{db: f.db}
+}
+
+func (f *RepoFactory) CreateSubscriptionRepo() subscription.Repo {
+	return &subscriptionRepo{db: f.db}
 }

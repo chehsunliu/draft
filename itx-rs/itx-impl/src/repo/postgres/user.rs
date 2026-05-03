@@ -37,4 +37,16 @@ impl UserRepo for PostgresUserRepo {
             email: row.1,
         })
     }
+
+    async fn get(&self, id: Uuid) -> Result<User, RepoError> {
+        let row: Option<(Uuid, String)> = sqlx::query_as("SELECT id, email FROM users WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(err)?;
+        let Some((id, email)) = row else {
+            return Err(RepoError::NotFound);
+        };
+        Ok(User { id, email })
+    }
 }

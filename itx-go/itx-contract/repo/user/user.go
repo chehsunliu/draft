@@ -2,9 +2,12 @@ package user
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 )
+
+var ErrNotFound = errors.New("not found")
 
 type User struct {
 	ID    uuid.UUID
@@ -18,4 +21,5 @@ type UpsertParams struct {
 
 type Repo interface {
 	Upsert(ctx context.Context, params UpsertParams) (User, error)
+	Get(ctx context.Context, id uuid.UUID) (User, error)
 }

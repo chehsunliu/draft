@@ -39,4 +39,19 @@ impl UserRepo for MariaDbUserRepo {
             email: row.1,
         })
     }
+
+    async fn get(&self, id: Uuid) -> Result<User, RepoError> {
+        let row: Option<(String, String)> = sqlx::query_as("SELECT id, email FROM users WHERE id = ?")
+            .bind(id.to_string())
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(err)?;
+        let Some((id_str, email)) = row else {
+            return Err(RepoError::NotFound);
+        };
+        Ok(User {
+            id: Uuid::parse_str(&id_str).map_err(err)?,
+            email,
+        })
+    }
 }
