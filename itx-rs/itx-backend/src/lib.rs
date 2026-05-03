@@ -15,6 +15,7 @@ pub fn create_app(app_state: AppState) -> Router {
     // Future feature routers that need auth get nested here.
     let protected: Router<AppState> = Router::new()
         .nest("/posts", feature::post::create_router())
+        .nest("/users", feature::user::create_router())
         .layer(from_fn(middleware::auth::require_user));
 
     Router::new()

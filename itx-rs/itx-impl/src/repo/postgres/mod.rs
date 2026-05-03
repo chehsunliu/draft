@@ -2,12 +2,15 @@ use std::sync::Arc;
 
 use itx_contract::repo::factory::RepoFactory;
 use itx_contract::repo::post::PostRepo;
+use itx_contract::repo::user::UserRepo;
 use sqlx::PgPool;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 
 use crate::repo::postgres::post::PostgresPostRepo;
+use crate::repo::postgres::user::PostgresUserRepo;
 
 pub mod post;
+pub mod user;
 
 #[derive(serde::Deserialize)]
 struct PostgresRepoFactoryConfig {
@@ -43,5 +46,9 @@ impl PostgresRepoFactory {
 impl RepoFactory for PostgresRepoFactory {
     fn create_post_repo(&self) -> Arc<dyn PostRepo> {
         Arc::new(PostgresPostRepo::new(self.pool.clone()))
+    }
+
+    fn create_user_repo(&self) -> Arc<dyn UserRepo> {
+        Arc::new(PostgresUserRepo::new(self.pool.clone()))
     }
 }

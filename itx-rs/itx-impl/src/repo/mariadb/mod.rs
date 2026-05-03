@@ -2,12 +2,15 @@ use std::sync::Arc;
 
 use itx_contract::repo::factory::RepoFactory;
 use itx_contract::repo::post::PostRepo;
+use itx_contract::repo::user::UserRepo;
 use sqlx::MySqlPool;
 use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions, MySqlSslMode};
 
 use crate::repo::mariadb::post::MariaDbPostRepo;
+use crate::repo::mariadb::user::MariaDbUserRepo;
 
 pub mod post;
+pub mod user;
 
 #[derive(serde::Deserialize)]
 struct MariaDbRepoFactoryConfig {
@@ -47,5 +50,9 @@ impl MariaDbRepoFactory {
 impl RepoFactory for MariaDbRepoFactory {
     fn create_post_repo(&self) -> Arc<dyn PostRepo> {
         Arc::new(MariaDbPostRepo::new(self.pool.clone()))
+    }
+
+    fn create_user_repo(&self) -> Arc<dyn UserRepo> {
+        Arc::new(MariaDbUserRepo::new(self.pool.clone()))
     }
 }

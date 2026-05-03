@@ -13,8 +13,9 @@ NOT_FOUND_BODY = {"error": {"message": "not found"}}
 
 
 @pytest.fixture(autouse=True)
-async def setup(db_seeder: DbSeeder):
+async def setup(db_seeder: DbSeeder, datadir: Path):
     await db_seeder.reset_tables()
+    await db_seeder.write_data(datadir / "baseline")
 
     yield
 

@@ -32,3 +32,10 @@ class Post(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime)
 
     tags: Mapped[list[Tag]] = relationship(secondary=PostTag.__table__, order_by=Tag.name)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(CHAR(36), primary_key=True)
+    email: Mapped[str] = mapped_column(String(254))

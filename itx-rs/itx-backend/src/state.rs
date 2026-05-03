@@ -1,6 +1,7 @@
 use axum::extract::FromRef;
 use itx_contract::repo::factory::RepoFactory;
 use itx_contract::repo::post::PostRepo;
+use itx_contract::repo::user::UserRepo;
 use itx_impl::repo::mariadb::MariaDbRepoFactory;
 use itx_impl::repo::postgres::PostgresRepoFactory;
 use std::error::Error;
@@ -9,6 +10,7 @@ use std::sync::Arc;
 #[derive(Clone)]
 pub struct AppState {
     pub post_repo: Arc<dyn PostRepo>,
+    pub user_repo: Arc<dyn UserRepo>,
 }
 
 impl AppState {
@@ -20,13 +22,20 @@ impl AppState {
             other => panic!("unknown ITX_DB_PROVIDER: {other}"),
         };
         let post_repo = repo_factory.create_post_repo();
+        let user_repo = repo_factory.create_user_repo();
 
-        Ok(Self { post_repo })
+        Ok(Self { post_repo, user_repo })
     }
 }
 
 impl FromRef<AppState> for Arc<dyn PostRepo> {
     fn from_ref(app_state: &AppState) -> Self {
         app_state.post_repo.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<dyn UserRepo> {
+    fn from_ref(app_state: &AppState) -> Self {
+        app_state.user_repo.clone()
     }
 }

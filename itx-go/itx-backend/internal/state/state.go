@@ -6,12 +6,14 @@ import (
 
 	"github.com/chehsunliu/itx/itx-go/itx-contract/repo/factory"
 	"github.com/chehsunliu/itx/itx-go/itx-contract/repo/post"
+	"github.com/chehsunliu/itx/itx-go/itx-contract/repo/user"
 	"github.com/chehsunliu/itx/itx-go/itx-impl/repo/mariadb"
 	"github.com/chehsunliu/itx/itx-go/itx-impl/repo/postgres"
 )
 
 type AppState struct {
 	PostRepo post.Repo
+	UserRepo user.Repo
 }
 
 func FromEnv() (AppState, error) {
@@ -38,5 +40,8 @@ func FromEnv() (AppState, error) {
 		return AppState{}, fmt.Errorf("unknown ITX_DB_PROVIDER: %s", provider)
 	}
 
-	return AppState{PostRepo: repoFactory.CreatePostRepo()}, nil
+	return AppState{
+		PostRepo: repoFactory.CreatePostRepo(),
+		UserRepo: repoFactory.CreateUserRepo(),
+	}, nil
 }

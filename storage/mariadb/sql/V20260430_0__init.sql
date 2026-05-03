@@ -1,10 +1,18 @@
+CREATE TABLE users (
+    id     CHAR(36)     NOT NULL,
+    email  VARCHAR(254) NOT NULL,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE posts (
     id          BIGINT       NOT NULL AUTO_INCREMENT,
     author_id   CHAR(36)     NOT NULL,
     title       VARCHAR(255) NOT NULL,
     body        TEXT         NOT NULL,
     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    CONSTRAINT fk_posts_author
+        FOREIGN KEY (author_id) REFERENCES users (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tags (

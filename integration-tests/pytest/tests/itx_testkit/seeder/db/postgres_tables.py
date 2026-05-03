@@ -34,3 +34,10 @@ class Post(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     tags: Mapped[list[Tag]] = relationship(secondary=PostTag.__table__, order_by=Tag.name)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    email: Mapped[str] = mapped_column(Text)

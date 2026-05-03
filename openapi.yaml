@@ -9,6 +9,25 @@ servers:
   - url: http://localhost:8080
 
 paths:
+  /api/v1/users/me:
+    get:
+      summary: Get current user (upserts on first call)
+      operationId: getMe
+      parameters:
+        - $ref: "#/components/parameters/ItxUserId"
+        - $ref: "#/components/parameters/ItxUserEmail"
+        - $ref: "#/components/parameters/ItxRequestId"
+      responses:
+        "200":
+          description: The current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "5XX":
+          $ref: "#/components/responses/ServerError"
   /api/v1/health:
     get:
       summary: Health check
@@ -160,6 +179,13 @@ components:
       schema:
         type: string
         format: uuid
+    ItxUserEmail:
+      name: X-Itx-User-Email
+      in: header
+      required: true
+      schema:
+        type: string
+        format: email
     PostId:
       name: id
       in: path
@@ -263,6 +289,22 @@ components:
           type: array
           items:
             type: string
+    UserResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/User"
+    User:
+      type: object
+      required: [id, email]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
     ErrorResponse:
       type: object
       required: [error]

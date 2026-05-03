@@ -10,12 +10,14 @@ import (
 const (
 	HeaderRequestID = "X-Itx-Request-Id"
 	HeaderUserID    = "X-Itx-User-Id"
+	HeaderUserEmail = "X-Itx-User-Email"
 	contextKey      = "itxctx"
 )
 
 type Context struct {
 	RequestID uuid.UUID
 	UserID    *uuid.UUID
+	UserEmail string
 }
 
 func parseUUIDHeader(c *gin.Context, name string) (*uuid.UUID, bool) {
@@ -50,7 +52,11 @@ func Extract() gin.HandlerFunc {
 			rid = uuid.New()
 		}
 
-		c.Set(contextKey, Context{RequestID: rid, UserID: userID})
+		c.Set(contextKey, Context{
+			RequestID: rid,
+			UserID:    userID,
+			UserEmail: c.GetHeader(HeaderUserEmail),
+		})
 		c.Next()
 	}
 }
