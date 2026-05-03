@@ -3,5 +3,21 @@ name = "itx-worker"
 version = "0.1.0"
 edition = "2024"
 
-[lib]
-path = "src/lib.rs"
+[[bin]]
+name = "itx-control-worker"
+path = "src/bin/itx-control-worker.rs"
+
+[[bin]]
+name = "itx-compute-worker"
+path = "src/bin/itx-compute-worker.rs"
+
+[dependencies]
+async-trait = "0.1"
+clap = { version = "4", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json"] }
+
+itx-contract = { path = "../itx-contract" }
+itx-impl = { path = "../itx-impl" }
