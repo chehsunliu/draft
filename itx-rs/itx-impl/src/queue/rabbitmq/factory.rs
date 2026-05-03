@@ -30,7 +30,7 @@ impl RabbitMessageQueueFactory {
             .expect("failed to read RabbitMQ environment variables");
 
         let url = format!(
-            "amqp://{}:{}@{}:{}/",
+            "amqp://{}:{}@{}:{}/%2F",
             config.user, config.password, config.host, config.port
         );
         let conn = Connection::connect(&url, ConnectionProperties::default()).await?;

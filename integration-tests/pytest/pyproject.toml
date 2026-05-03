@@ -6,8 +6,10 @@ readme = "README.md"
 requires-python = ">=3.14"
 
 dependencies = [
+    "aio-pika>=9.6.2",
     "asyncmy>=0.2.11",
     "asyncpg>=0.31.0",
+    "boto3>=1.43.2",
     "httpx>=0.28.0",
     "mypy>=1.20.0",
     "openapi-core>=0.23.1",
@@ -37,6 +39,10 @@ pythonpath = ["tests"]
 
 [tool.mypy]
 check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "boto3.*"
+ignore_missing_imports = true
 
 [dependency-groups]
 dev = [
