@@ -8,6 +8,7 @@ import (
 
 	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/feature/health"
 	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/feature/post"
+	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/feature/subscription"
 	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/feature/user"
 	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/middleware/auth"
 	"github.com/chehsunliu/itx/itx-go/itx-backend/internal/middleware/itxctx"
@@ -30,6 +31,7 @@ func NewRouter(s state.AppState) *gin.Engine {
 	protected.Use(auth.RequireUser())
 	post.NewHandler(s.PostRepo).Register(protected)
 	user.NewHandler(s.UserRepo, s.SubscriptionRepo).Register(protected)
+	subscription.NewHandler(s.UserRepo, s.SubscriptionRepo).Register(protected)
 
 	return r
 }

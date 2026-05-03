@@ -1,11 +1,10 @@
 use crate::error::BackendError;
 use crate::feature::user::dto::UserDto;
-use crate::feature::user::use_case::{get_me, list_subscriptions, subscribe, unsubscribe};
+use crate::feature::user::use_case::{get_me, list_subscriptions};
 use crate::middleware::context::ItxContext;
 use crate::state::AppState;
 use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::routing::{get, put};
+use axum::routing::get;
 use axum::{Extension, Json, Router};
 use itx_contract::repo::subscription::SubscriptionRepo;
 use itx_contract::repo::user::UserRepo;
@@ -32,42 +31,6 @@ async fn get_me(
     Ok(Json(output))
 }
 
-async fn subscribe(
-    State(user_repo): State<Arc<dyn UserRepo>>,
-    State(subscription_repo): State<Arc<dyn SubscriptionRepo>>,
-    Extension(context): Extension<ItxContext>,
-    Path(author_id): Path<Uuid>,
-) -> Result<StatusCode, BackendError> {
-    let Some(email) = context.user_email.clone() else {
-        return Err(BackendError::Unknown("missing X-Itx-User-Email".into()));
-    };
-    let use_case = subscribe::SubscribeUseCase::new(user_repo, subscription_repo);
-    use_case
-        .execute(subscribe::ExecuteParams {
-            subscriber_id: context.user_id.unwrap(),
-            subscriber_email: email,
-            author_id,
-        })
-        .await?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-async fn unsubscribe(
-    State(user_repo): State<Arc<dyn UserRepo>>,
-    State(subscription_repo): State<Arc<dyn SubscriptionRepo>>,
-    Extension(context): Extension<ItxContext>,
-    Path(author_id): Path<Uuid>,
-) -> Result<StatusCode, BackendError> {
-    let use_case = unsubscribe::UnsubscribeUseCase::new(user_repo, subscription_repo);
-    use_case
-        .execute(unsubscribe::ExecuteParams {
-            subscriber_id: context.user_id.unwrap(),
-            author_id,
-        })
-        .await?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
 async fn list_subscriptions(
     State(user_repo): State<Arc<dyn UserRepo>>,
     State(subscription_repo): State<Arc<dyn SubscriptionRepo>>,
@@ -80,12 +43,8 @@ async fn list_subscriptions(
     Ok(Json(output))
 }
 
-pub fn create_users_router() -> Router<AppState> {
+pub fn create_router() -> Router<AppState> {
     Router::new()
         .route("/me", get(get_me))
         .route("/{id}/subscriptions", get(list_subscriptions))
-}
-
-pub fn create_subscriptions_router() -> Router<AppState> {
-    Router::new().route("/{author_id}", put(subscribe).delete(unsubscribe))
 }
