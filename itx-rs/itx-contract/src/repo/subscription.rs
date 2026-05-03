@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use uuid::Uuid;
 
 use crate::repo::error::RepoError;
+use crate::repo::user::User;
 
 #[derive(Debug, Clone)]
 pub struct SubscribeParams {
@@ -22,4 +23,8 @@ pub trait SubscriptionRepo: Send + Sync {
 
     /// Removes the subscription if present. Idempotent.
     async fn unsubscribe(&self, params: UnsubscribeParams) -> Result<(), RepoError>;
+
+    /// Returns the list of authors that `subscriber_id` follows, ordered by most recently
+    /// subscribed first.
+    async fn list_authors(&self, subscriber_id: Uuid) -> Result<Vec<User>, RepoError>;
 }

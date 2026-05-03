@@ -1,11 +1,11 @@
 use crate::error::BackendError;
 use crate::feature::user::dto::UserDto;
-use crate::feature::user::use_case::{get_me, subscribe, unsubscribe};
+use crate::feature::user::use_case::{get_me, list_subscriptions, subscribe, unsubscribe};
 use crate::middleware::context::ItxContext;
 use crate::state::AppState;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::routing::{get, post};
+use axum::routing::{get, put};
 use axum::{Extension, Json, Router};
 use itx_contract::repo::subscription::SubscriptionRepo;
 use itx_contract::repo::user::UserRepo;
@@ -68,8 +68,24 @@ async fn unsubscribe(
     Ok(StatusCode::NO_CONTENT)
 }
 
-pub fn create_router() -> Router<AppState> {
+async fn list_subscriptions(
+    State(user_repo): State<Arc<dyn UserRepo>>,
+    State(subscription_repo): State<Arc<dyn SubscriptionRepo>>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<list_subscriptions::ExecuteOutput>, BackendError> {
+    let use_case = list_subscriptions::ListSubscriptionsUseCase::new(user_repo, subscription_repo);
+    let output = use_case
+        .execute(list_subscriptions::ExecuteParams { subscriber_id: id })
+        .await?;
+    Ok(Json(output))
+}
+
+pub fn create_users_router() -> Router<AppState> {
     Router::new()
         .route("/me", get(get_me))
-        .route("/{id}/subscriptions", post(subscribe).delete(unsubscribe))
+        .route("/{id}/subscriptions", get(list_subscriptions))
+}
+
+pub fn create_subscriptions_router() -> Router<AppState> {
+    Router::new().route("/{author_id}", put(subscribe).delete(unsubscribe))
 }

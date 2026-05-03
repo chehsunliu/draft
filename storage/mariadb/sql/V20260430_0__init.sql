@@ -33,9 +33,9 @@ CREATE TABLE post_tags (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE subscriptions (
-    subscriber_id CHAR(36)  NOT NULL,
-    author_id     CHAR(36)  NOT NULL,
-    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    subscriber_id CHAR(36)     NOT NULL,
+    author_id     CHAR(36)     NOT NULL,
+    created_at    TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (subscriber_id, author_id),
     CONSTRAINT fk_sub_subscriber FOREIGN KEY (subscriber_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_sub_author     FOREIGN KEY (author_id)     REFERENCES users (id) ON DELETE CASCADE,

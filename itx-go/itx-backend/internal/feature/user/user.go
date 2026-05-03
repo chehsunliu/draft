@@ -16,6 +16,10 @@ type userDto struct {
 	Email string `json:"email"`
 }
 
+type listSubscriptionsResponse struct {
+	Items []userDto `json:"items"`
+}
+
 type Handler struct {
 	userRepo         contractuser.Repo
 	subscriptionRepo contractsubscription.Repo
@@ -45,8 +49,8 @@ func (h *Handler) getMe(c *gin.Context) {
 	c.JSON(http.StatusOK, userDto{ID: u.ID.String(), Email: u.Email})
 }
 
-func parseAuthorID(c *gin.Context) (uuid.UUID, bool) {
-	raw := c.Param("id")
+func parseUUIDParam(c *gin.Context, name string) (uuid.UUID, bool) {
+	raw := c.Param(name)
 	id, err := uuid.Parse(raw)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user id"})
@@ -57,7 +61,7 @@ func parseAuthorID(c *gin.Context) (uuid.UUID, bool) {
 }
 
 func (h *Handler) subscribe(c *gin.Context) {
-	authorID, ok := parseAuthorID(c)
+	authorID, ok := parseUUIDParam(c, "author_id")
 	if !ok {
 		return
 	}
@@ -105,7 +109,7 @@ func (h *Handler) subscribe(c *gin.Context) {
 }
 
 func (h *Handler) unsubscribe(c *gin.Context) {
-	authorID, ok := parseAuthorID(c)
+	authorID, ok := parseUUIDParam(c, "author_id")
 	if !ok {
 		return
 	}
@@ -138,8 +142,40 @@ func (h *Handler) unsubscribe(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+func (h *Handler) listSubscriptions(c *gin.Context) {
+	id, ok := parseUUIDParam(c, "id")
+	if !ok {
+		return
+	}
+
+	if _, err := h.userRepo.Get(c.Request.Context(), id); err != nil {
+		if errors.Is(err, contractuser.ErrNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"message": "not found"})
+			c.Abort()
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.Abort()
+		return
+	}
+
+	authors, err := h.subscriptionRepo.ListAuthors(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.Abort()
+		return
+	}
+
+	items := make([]userDto, 0, len(authors))
+	for _, a := range authors {
+		items = append(items, userDto{ID: a.ID.String(), Email: a.Email})
+	}
+	c.JSON(http.StatusOK, listSubscriptionsResponse{Items: items})
+}
+
 func (h *Handler) Register(router gin.IRouter) {
 	router.GET("/users/me", h.getMe)
-	router.POST("/users/:id/subscriptions", h.subscribe)
-	router.DELETE("/users/:id/subscriptions", h.unsubscribe)
+	router.GET("/users/:id/subscriptions", h.listSubscriptions)
+	router.PUT("/subscriptions/:author_id", h.subscribe)
+	router.DELETE("/subscriptions/:author_id", h.unsubscribe)
 }

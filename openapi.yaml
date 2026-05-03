@@ -28,16 +28,16 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "5XX":
           $ref: "#/components/responses/ServerError"
-  /api/v1/users/{id}/subscriptions:
+  /api/v1/subscriptions/{author_id}:
     parameters:
-      - name: id
+      - name: author_id
         in: path
         required: true
         description: The author the caller wants to subscribe to or unsubscribe from.
         schema:
           type: string
           format: uuid
-    post:
+    put:
       summary: Subscribe to an author (idempotent)
       operationId: subscribe
       parameters:
@@ -66,6 +66,34 @@ paths:
           description: Subscription removed (or did not exist)
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "5XX":
+          $ref: "#/components/responses/ServerError"
+  /api/v1/users/{id}/subscriptions:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The user whose outgoing subscriptions to list.
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: List the authors that user {id} subscribes to
+      operationId: listSubscriptions
+      parameters:
+        - $ref: "#/components/parameters/ItxUserId"
+        - $ref: "#/components/parameters/ItxRequestId"
+      responses:
+        "200":
+          description: The list of authors that {id} subscribes to
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListSubscriptionsResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -345,6 +373,18 @@ components:
       properties:
         data:
           $ref: "#/components/schemas/User"
+    ListSubscriptionsResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/User"
     User:
       type: object
       required: [id, email]
