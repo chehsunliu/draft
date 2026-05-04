@@ -24,11 +24,13 @@ artifact_profiles: dict[str, ArtifactProfile] = {
         cwd=repo_root / "itx-rs",
         build_cmd=["cargo", "build"],
         backend_binary="target/debug/itx-backend",
+        control_worker_binary="target/debug/itx-control-worker",
     ),
     "golang": ArtifactProfile(
         cwd=repo_root / "itx-go",
         build_cmd=["make", "build"],
         backend_binary="bin/itx-backend",
+        control_worker_binary="bin/itx-control-worker",
     ),
 }
 

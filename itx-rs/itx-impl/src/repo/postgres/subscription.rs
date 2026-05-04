@@ -58,4 +58,19 @@ impl SubscriptionRepo for PostgresSubscriptionRepo {
 
         Ok(rows.into_iter().map(|(id, email)| User { id, email }).collect())
     }
+
+    async fn list_subscribers(&self, author_id: Uuid) -> Result<Vec<User>, RepoError> {
+        let rows: Vec<(Uuid, String)> = sqlx::query_as(
+            "SELECT u.id, u.email \
+             FROM subscriptions s JOIN users u ON u.id = s.subscriber_id \
+             WHERE s.author_id = $1 \
+             ORDER BY s.created_at DESC, u.id ASC",
+        )
+        .bind(author_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(err)?;
+
+        Ok(rows.into_iter().map(|(id, email)| User { id, email }).collect())
+    }
 }

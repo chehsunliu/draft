@@ -27,4 +27,8 @@ pub trait SubscriptionRepo: Send + Sync {
     /// Returns the list of authors that `subscriber_id` follows, ordered by most recently
     /// subscribed first.
     async fn list_authors(&self, subscriber_id: Uuid) -> Result<Vec<User>, RepoError>;
+
+    /// Returns the list of users subscribed to `author_id`, ordered by most recently subscribed
+    /// first.
+    async fn list_subscribers(&self, author_id: Uuid) -> Result<Vec<User>, RepoError>;
 }
