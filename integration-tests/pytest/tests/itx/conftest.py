@@ -179,7 +179,9 @@ def control_plane_env_fixture() -> Iterator[dict[str, str]]:
 
 @pytest.fixture(name="compute_plane_env", scope="package")
 def compute_plane_env_fixture() -> Iterator[dict[str, str]]:
-    env: dict[str, str] = {}
+    env: dict[str, str] = {
+        **queue_env,
+    }
     yield env
 
 
