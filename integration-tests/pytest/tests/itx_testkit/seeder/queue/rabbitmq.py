@@ -62,3 +62,12 @@ class RabbitQueueSeeder(QueueSeeder):
             raise ValueError(f"unknown queue key {queue_key!r}; expected one of {QUEUE_KEYS}")
         assert self._channel is not None
         return RabbitQueueReader(self._channel, self._queue_names[queue_key])
+
+    async def publish(self, queue_key: str, body: str) -> None:
+        if queue_key not in QUEUE_KEYS:
+            raise ValueError(f"unknown queue key {queue_key!r}; expected one of {QUEUE_KEYS}")
+        assert self._channel is not None
+        await self._channel.default_exchange.publish(
+            aio_pika.Message(body=body.encode("utf-8")),
+            routing_key=self._queue_names[queue_key],
+        )

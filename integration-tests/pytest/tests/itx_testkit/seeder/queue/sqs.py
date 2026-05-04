@@ -72,3 +72,9 @@ class SqsQueueSeeder(QueueSeeder):
             raise ValueError(f"unknown queue key {queue_key!r}; expected one of {QUEUE_KEYS}")
         assert self._client is not None
         return SqsQueueReader(self._client, self._queue_urls[queue_key])
+
+    async def publish(self, queue_key: str, body: str) -> None:
+        if queue_key not in QUEUE_KEYS:
+            raise ValueError(f"unknown queue key {queue_key!r}; expected one of {QUEUE_KEYS}")
+        assert self._client is not None
+        await self._client.send_message(QueueUrl=self._queue_urls[queue_key], MessageBody=body)
