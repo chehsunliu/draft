@@ -18,7 +18,7 @@ from itx_testkit.seeder.queue.sqs import SqsQueueSeeder
 # Artifacts
 # ----------------------------------------
 
-repo_root = Path(__file__).parent / "../../../.."
+repo_root = Path(__file__).parent / "../../.."
 artifact_profiles: dict[str, ArtifactProfile] = {
     "rust": ArtifactProfile(
         cwd=repo_root / "itx-rs",
@@ -44,7 +44,7 @@ artifact_profile = artifact_profiles[itx_lang]
 # Docker Compose
 # ----------------------------------------
 
-compose_dir = Path(__file__).parent / "../../.."
+compose_dir = Path(__file__).parent / "../.."
 itx_test_profile = os.environ.get("ITX_TEST_PROFILE", "aws")
 
 

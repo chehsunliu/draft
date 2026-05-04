@@ -21,7 +21,7 @@ jobs:
             docker-init-services: postgres-init
     defaults:
       run:
-        working-directory: integration-tests/pytest
+        working-directory: integration-tests
     steps:
       - uses: actions/checkout@v6
 
@@ -82,7 +82,7 @@ jobs:
             docker-init-services: postgres-init
     defaults:
       run:
-        working-directory: integration-tests/pytest
+        working-directory: integration-tests
     env:
       ITX_LANG: golang
     steps:

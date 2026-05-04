@@ -2,13 +2,13 @@
 
 [![ITX Testing in Pytest](https://github.com/chehsunliu/itx/actions/workflows/itx-testing-in-pytest.yml/badge.svg)](https://github.com/chehsunliu/itx/actions/workflows/itx-testing-in-pytest.yml)
 
-A demonstration project for performing integration testing on multi-module backend systems using **Vitest** and **Pytest** as test runners.
+A demonstration project for performing integration testing on multi-module backend systems using **Pytest** as the test runner.
 
 The project is designed to support multiple backend languages behind a shared API spec. For now, the implementations are **Go (Gin)** and **Rust (Axum)**; more may be added later.
 
 ## Goals
 
-- Show how to drive integration tests for backend services from a language-agnostic test runner (Vitest / Pytest).
+- Show how to drive integration tests for backend services from a language-agnostic test runner (Pytest).
 - Provide functionally identical implementations across languages (currently Go and Rust) behind the same API spec.
 - Demonstrate swappable infrastructure (databases, message queues, caches) behind interfaces, so the backend and worker code does not depend on a concrete implementation.
 - Run the full matrix in GitHub Actions with real services spun up as containers — not mocks.
@@ -26,7 +26,7 @@ Prerequisites:
 One-time setup:
 
 ```sh
-cd integration-tests/pytest
+cd integration-tests
 uv sync
 ```
 

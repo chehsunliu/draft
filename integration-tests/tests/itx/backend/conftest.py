@@ -14,7 +14,7 @@ from itx_testkit.utils import read_all_logs, wait_for_port
 
 
 def load_openapi_schema():
-    schema_path = Path(__file__).parent / "../../../../../openapi.yaml"
+    schema_path = Path(__file__).parent / "../../../../openapi.yaml"
     with open(schema_path) as f:
         schema = yaml.safe_load(f)
     schema["servers"] = [
