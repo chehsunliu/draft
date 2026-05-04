@@ -54,3 +54,30 @@ func (r *subscriptionRepo) ListAuthors(ctx context.Context, subscriberID uuid.UU
 	}
 	return out, rows.Err()
 }
+
+func (r *subscriptionRepo) ListSubscribers(ctx context.Context, authorID uuid.UUID) ([]user.User, error) {
+	rows, err := r.db.QueryContext(ctx,
+		"SELECT u.id, u.email "+
+			"FROM subscriptions s JOIN users u ON u.id = s.subscriber_id "+
+			"WHERE s.author_id = $1 "+
+			"ORDER BY s.created_at DESC, u.id ASC",
+		authorID.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := []user.User{}
+	for rows.Next() {
+		var u user.User
+		var idStr string
+		if err := rows.Scan(&idStr, &u.Email); err != nil {
+			return nil, err
+		}
+		if err := u.ID.UnmarshalText([]byte(idStr)); err != nil {
+			return nil, err
+		}
+		out = append(out, u)
+	}
+	return out, rows.Err()
+}

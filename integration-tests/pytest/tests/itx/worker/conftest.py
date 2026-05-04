@@ -1,4 +1,3 @@
-import os
 import signal
 import time
 from subprocess import Popen
@@ -8,8 +7,6 @@ import pytest
 from pytest_httpserver import HTTPServer
 
 from itx_testkit.profile import ArtifactProfile
-
-itx_lang = os.environ.get("ITX_LANG", "rust")
 
 
 @pytest.fixture(name="email_server", scope="package")
@@ -27,9 +24,6 @@ def worker_proc_fixture(
     control_plane_env: dict[str, str],
     artifact_profile: ArtifactProfile,
 ) -> Iterator[Popen[str]]:
-    if itx_lang != "rust":
-        pytest.skip("worker integration tests are rust-only for now")
-
     email_server.clear()
     env: dict[str, str] = {
         **control_plane_env,

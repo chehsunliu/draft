@@ -30,6 +30,7 @@ artifact_profiles: dict[str, ArtifactProfile] = {
         cwd=repo_root / "itx-go",
         build_cmd=["make", "build"],
         backend_binary="bin/itx-backend",
+        control_worker_binary="bin/itx-control-worker",
     ),
 }
 

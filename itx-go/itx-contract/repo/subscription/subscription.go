@@ -24,4 +24,8 @@ type Repo interface {
 	// ListAuthors returns the users that subscriberID follows, ordered by most recently
 	// subscribed first.
 	ListAuthors(ctx context.Context, subscriberID uuid.UUID) ([]user.User, error)
+
+	// ListSubscribers returns the users subscribed to authorID, ordered by most recently
+	// subscribed first.
+	ListSubscribers(ctx context.Context, authorID uuid.UUID) ([]user.User, error)
 }
