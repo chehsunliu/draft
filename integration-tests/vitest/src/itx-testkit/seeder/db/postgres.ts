@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { Pool, type PoolConfig } from "pg";
 
-import type { DbSeeder } from "./base.ts";
+import type { DbSeeder } from "./base.js";
 
 interface ColumnInfo {
   name: string;
@@ -76,25 +76,18 @@ export class PostgresDbSeeder implements DbSeeder {
         for (const row of rows) {
           const placeholders = cols.map((_, i) => `$${i + 1}`).join(",");
           const values = cols.map((c) => row[c]);
-          await client.query(
-            `INSERT INTO "${table.name}" (${colList}) VALUES (${placeholders})`,
-            values,
-          );
+          await client.query(`INSERT INTO "${table.name}" (${colList}) VALUES (${placeholders})`, values);
         }
       }
       // Bump IDENTITY sequences past explicit-id inserts.
       for (const table of this.tables) {
         if (!table.hasIdColumn) continue;
-        const seq = await client.query<{ seq: string | null }>(
-          `SELECT pg_get_serial_sequence($1, 'id') AS seq`,
-          [table.name],
-        );
+        const seq = await client.query<{ seq: string | null }>(`SELECT pg_get_serial_sequence($1, 'id') AS seq`, [
+          table.name,
+        ]);
         const seqName = seq.rows[0]?.seq;
         if (!seqName) continue;
-        await client.query(
-          `SELECT setval($1, COALESCE((SELECT MAX(id) FROM "${table.name}"), 1), true)`,
-          [seqName],
-        );
+        await client.query(`SELECT setval($1, COALESCE((SELECT MAX(id) FROM "${table.name}"), 1), true)`, [seqName]);
       }
     } finally {
       client.release();

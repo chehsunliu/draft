@@ -1,26 +1,20 @@
 import * as path from "node:path";
 
-import { beforeAll, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 
-import { baseUrl, dbSeeder } from "../../../src/setup.ts";
+import { baseUrl, dbSeeder } from "../../../src/setup.js";
 
 const userId = "11111111-1111-1111-1111-111111111111";
 const fixtures = path.resolve(import.meta.dirname, "post");
 
-let seeder: Awaited<ReturnType<typeof dbSeeder>>;
-
-beforeAll(async () => {
-  seeder = await dbSeeder();
-});
-
 beforeEach(async () => {
-  await seeder.resetTables();
-  await seeder.writeData(path.join(fixtures, "20260503_baseline"));
+  await dbSeeder().resetTables();
+  await dbSeeder().writeData(path.join(fixtures, "20260503_baseline"));
 });
 
 describe("list posts", () => {
   test("returns the caller's posts in DESC id order", async () => {
-    await seeder.writeData(path.join(fixtures, "20260502_simple"));
+    await dbSeeder().writeData(path.join(fixtures, "20260502_simple"));
 
     const r = await fetch(`${baseUrl()}/api/v1/posts`, {
       headers: { "X-Itx-User-Id": userId },
