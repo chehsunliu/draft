@@ -9,7 +9,9 @@ use itx_contract::queue::{MessageHandler, MessageQueue};
 use lapin::options::{BasicAckOptions, BasicConsumeOptions, BasicPublishOptions, BasicQosOptions, BasicRejectOptions};
 use lapin::types::FieldTable;
 use lapin::{BasicProperties, Channel, Connection};
-use tokio::sync::OnceCell;
+use tokio::sync::{OnceCell, Semaphore};
+use tokio::task::JoinSet;
+use tokio_util::sync::CancellationToken;
 
 pub(crate) fn err<E: std::fmt::Display>(e: E) -> QueueError {
     QueueError::Unknown(e.to_string())
@@ -25,16 +27,20 @@ pub struct RabbitMessageQueue {
     consume_channel: OnceCell<Channel>,
     queue_name: String,
     consumer_tag: String,
+    semaphore: Arc<Semaphore>,
+    max_concurrency: u32,
 }
 
 impl RabbitMessageQueue {
-    pub fn new(conn: Arc<Connection>, queue_name: impl Into<String>) -> Self {
+    pub fn new(conn: Arc<Connection>, queue_name: impl Into<String>, max_concurrency: u32) -> Self {
         Self {
             conn,
             publish_channel: OnceCell::new(),
             consume_channel: OnceCell::new(),
             queue_name: queue_name.into(),
             consumer_tag: format!("itx-{}", uuid::Uuid::new_v4()),
+            semaphore: Arc::new(Semaphore::new(max_concurrency as usize)),
+            max_concurrency,
         }
     }
 
@@ -48,7 +54,10 @@ impl RabbitMessageQueue {
         self.consume_channel
             .get_or_try_init(|| async {
                 let ch = self.conn.create_channel().await.map_err(err)?;
-                ch.basic_qos(10, BasicQosOptions::default()).await.map_err(err)?;
+                // Match prefetch to max_concurrency so the broker doesn't dispatch faster than
+                // we can hold semaphore permits. u16 cap because basic_qos prefetch is u16.
+                let prefetch = std::cmp::min(self.max_concurrency, u16::MAX as u32) as u16;
+                ch.basic_qos(prefetch, BasicQosOptions::default()).await.map_err(err)?;
                 Ok(ch)
             })
             .await
@@ -74,7 +83,7 @@ impl MessageQueue for RabbitMessageQueue {
         Ok(())
     }
 
-    async fn receive(&self, handler: Arc<dyn MessageHandler>) -> Result<(), QueueError> {
+    async fn receive(&self, handler: Arc<dyn MessageHandler>, cancel: CancellationToken) -> Result<(), QueueError> {
         let channel = self.consume_chan().await?;
         let mut consumer = channel
             .basic_consume(
@@ -86,33 +95,53 @@ impl MessageQueue for RabbitMessageQueue {
             .await
             .map_err(err)?;
 
-        while let Some(delivery) = consumer.next().await {
-            let delivery = delivery.map_err(err)?;
-            let body = match std::str::from_utf8(&delivery.data) {
-                Ok(s) => s.to_string(),
-                Err(e) => {
-                    tracing::warn!(error = %e, "non-utf8 message body; rejecting to DLQ");
-                    delivery
-                        .reject(BasicRejectOptions { requeue: false })
-                        .await
-                        .map_err(err)?;
-                    continue;
-                }
-            };
+        let mut tasks: JoinSet<()> = JoinSet::new();
 
-            match handler.handle(&body).await {
-                Ok(()) => {
-                    delivery.ack(BasicAckOptions::default()).await.map_err(err)?;
+        loop {
+            tokio::select! {
+                _ = cancel.cancelled() => {
+                    tracing::info!(queue = %self.queue_name, "cancellation received; stopping receive");
+                    break;
                 }
-                Err(e) => {
-                    tracing::warn!(error = %e, "handler failed; rejecting to DLQ");
-                    delivery
-                        .reject(BasicRejectOptions { requeue: false })
-                        .await
-                        .map_err(err)?;
+                next = consumer.next() => {
+                    let Some(delivery) = next else { break };
+                    let delivery = delivery.map_err(err)?;
+
+                    let permit = self.semaphore.clone().acquire_owned().await.unwrap();
+                    let handler = handler.clone();
+                    tasks.spawn(async move {
+                        let _permit = permit;
+                        let body = match std::str::from_utf8(&delivery.data) {
+                            Ok(s) => s.to_string(),
+                            Err(e) => {
+                                tracing::warn!(error = %e, "non-utf8 message body; rejecting to DLQ");
+                                if let Err(e) = delivery.reject(BasicRejectOptions { requeue: false }).await {
+                                    tracing::error!(error = %e, "failed to reject non-utf8 message");
+                                }
+                                return;
+                            }
+                        };
+
+                        match handler.handle(&body).await {
+                            Ok(()) => {
+                                if let Err(e) = delivery.ack(BasicAckOptions::default()).await {
+                                    tracing::error!(error = %e, "failed to ack message after success");
+                                }
+                            }
+                            Err(e) => {
+                                tracing::warn!(error = %e, "handler failed; rejecting to DLQ");
+                                if let Err(e) = delivery.reject(BasicRejectOptions { requeue: false }).await {
+                                    tracing::error!(error = %e, "failed to reject message after handler failure");
+                                }
+                            }
+                        }
+                    });
                 }
             }
         }
+
+        tracing::info!(queue = %self.queue_name, in_flight = tasks.len(), "draining in-flight handlers");
+        while tasks.join_next().await.is_some() {}
         Ok(())
     }
 }

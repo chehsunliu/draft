@@ -12,10 +12,16 @@ struct RabbitMessageQueueFactoryConfig {
     pub port: u16,
     pub user: String,
     pub password: String,
+    #[serde(default = "default_max_concurrency")]
+    pub max_concurrency: u32,
     pub control_standard_queue: String,
     pub control_premium_queue: String,
     pub compute_standard_queue: String,
     pub compute_premium_queue: String,
+}
+
+fn default_max_concurrency() -> u32 {
+    100
 }
 
 pub struct RabbitMessageQueueFactory {
@@ -47,6 +53,7 @@ impl MessageQueueFactory for RabbitMessageQueueFactory {
         Arc::new(RabbitMessageQueue::new(
             self.conn.clone(),
             self.config.control_standard_queue.clone(),
+            self.config.max_concurrency,
         ))
     }
 
@@ -54,6 +61,7 @@ impl MessageQueueFactory for RabbitMessageQueueFactory {
         Arc::new(RabbitMessageQueue::new(
             self.conn.clone(),
             self.config.control_premium_queue.clone(),
+            self.config.max_concurrency,
         ))
     }
 
@@ -61,6 +69,7 @@ impl MessageQueueFactory for RabbitMessageQueueFactory {
         Arc::new(RabbitMessageQueue::new(
             self.conn.clone(),
             self.config.compute_standard_queue.clone(),
+            self.config.max_concurrency,
         ))
     }
 
@@ -68,6 +77,7 @@ impl MessageQueueFactory for RabbitMessageQueueFactory {
         Arc::new(RabbitMessageQueue::new(
             self.conn.clone(),
             self.config.compute_premium_queue.clone(),
+            self.config.max_concurrency,
         ))
     }
 }

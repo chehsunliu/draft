@@ -17,16 +17,9 @@ pub async fn run(queues: Vec<Arc<dyn MessageQueue>>, handler: Arc<dyn MessageHan
         let handler = handler.clone();
         let token = token.clone();
         handles.push(tokio::spawn(async move {
-            tokio::select! {
-                _ = token.cancelled() => {
-                    tracing::info!("queue listener cancelled");
-                }
-                result = queue.receive(handler) => {
-                    match result {
-                        Ok(()) => tracing::info!("queue listener returned cleanly"),
-                        Err(e) => tracing::error!(error = %e, "queue listener errored"),
-                    }
-                }
+            match queue.receive(handler, token).await {
+                Ok(()) => tracing::info!("queue listener returned cleanly"),
+                Err(e) => tracing::error!(error = %e, "queue listener errored"),
             }
         }));
     }
