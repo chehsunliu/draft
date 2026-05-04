@@ -9,10 +9,16 @@ use crate::queue::sqs::SqsMessageQueue;
 #[derive(serde::Deserialize)]
 struct SqsMessageQueueFactoryConfig {
     pub local_endpoint_url: Option<String>,
+    #[serde(default = "default_max_concurrency")]
+    pub max_concurrency: u32,
     pub control_standard_queue_url: String,
     pub control_premium_queue_url: String,
     pub compute_standard_queue_url: String,
     pub compute_premium_queue_url: String,
+}
+
+fn default_max_concurrency() -> u32 {
+    100
 }
 
 pub struct SqsMessageQueueFactory {
@@ -42,6 +48,7 @@ impl MessageQueueFactory for SqsMessageQueueFactory {
         Arc::new(SqsMessageQueue::new(
             self.client.clone(),
             self.config.control_standard_queue_url.clone(),
+            self.config.max_concurrency,
         ))
     }
 
@@ -49,6 +56,7 @@ impl MessageQueueFactory for SqsMessageQueueFactory {
         Arc::new(SqsMessageQueue::new(
             self.client.clone(),
             self.config.control_premium_queue_url.clone(),
+            self.config.max_concurrency,
         ))
     }
 
@@ -56,6 +64,7 @@ impl MessageQueueFactory for SqsMessageQueueFactory {
         Arc::new(SqsMessageQueue::new(
             self.client.clone(),
             self.config.compute_standard_queue_url.clone(),
+            self.config.max_concurrency,
         ))
     }
 
@@ -63,6 +72,7 @@ impl MessageQueueFactory for SqsMessageQueueFactory {
         Arc::new(SqsMessageQueue::new(
             self.client.clone(),
             self.config.compute_premium_queue_url.clone(),
+            self.config.max_concurrency,
         ))
     }
 }

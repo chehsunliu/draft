@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use error::QueueError;
+use tokio_util::sync::CancellationToken;
 
 /// Errors returned by a message handler. Anything implementing `std::error::Error` works.
 pub type HandlerError = Box<dyn std::error::Error + Send + Sync>;
@@ -22,7 +23,8 @@ pub trait MessageQueue: Send + Sync {
     /// Publish a message to this queue.
     async fn publish(&self, body: &str) -> Result<(), QueueError>;
 
-    /// Run the consumer loop, dispatching each message to `handler`. Returns when the underlying
-    /// connection closes or the future is cancelled.
-    async fn receive(&self, handler: Arc<dyn MessageHandler>) -> Result<(), QueueError>;
+    /// Run the consumer loop, dispatching each message to `handler`. When `cancel` is triggered
+    /// the impl stops pulling new messages and waits for in-flight handlers to finish (graceful
+    /// drain) before returning.
+    async fn receive(&self, handler: Arc<dyn MessageHandler>, cancel: CancellationToken) -> Result<(), QueueError>;
 }
