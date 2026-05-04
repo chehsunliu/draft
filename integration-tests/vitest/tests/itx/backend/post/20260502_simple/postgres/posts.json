@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "author_id": "11111111-1111-1111-1111-111111111111",
+    "title": "Yeah",
+    "body": "Blah blah blah...",
+    "created_at": "2026-03-15T10:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "author_id": "11111111-1111-1111-1111-111111111111",
+    "title": "Rust adventures",
+    "body": "Talking about traits.",
+    "created_at": "2026-03-16T11:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "author_id": "11111111-1111-1111-1111-111111111111",
+    "title": "Weekend recap",
+    "body": "Coffee and code.",
+    "created_at": "2026-03-17T12:00:00.000Z"
+  },
+  {
+    "id": 4,
+    "author_id": "22222222-2222-2222-2222-222222222222",
+    "title": "Hello from another",
+    "body": "Should not show up for user 1.",
+    "created_at": "2026-03-18T09:00:00.000Z"
+  }
+]
