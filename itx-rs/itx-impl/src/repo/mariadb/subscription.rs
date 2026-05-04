@@ -62,4 +62,26 @@ impl SubscriptionRepo for MariaDbSubscriptionRepo {
             })
             .collect()
     }
+
+    async fn list_subscribers(&self, author_id: Uuid) -> Result<Vec<User>, RepoError> {
+        let rows: Vec<(String, String)> = sqlx::query_as(
+            "SELECT u.id, u.email \
+             FROM subscriptions s JOIN users u ON u.id = s.subscriber_id \
+             WHERE s.author_id = ? \
+             ORDER BY s.created_at DESC, u.id ASC",
+        )
+        .bind(author_id.to_string())
+        .fetch_all(&self.pool)
+        .await
+        .map_err(err)?;
+
+        rows.into_iter()
+            .map(|(id_str, email)| {
+                Ok(User {
+                    id: Uuid::parse_str(&id_str).map_err(err)?,
+                    email,
+                })
+            })
+            .collect()
+    }
 }
