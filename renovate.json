@@ -3,10 +3,15 @@
   "extends": [
     "config:best-practices"
   ],
+  "platformAutomerge": true,
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["lockFileMaintenance"],
       "automerge": true
     }
   ]
