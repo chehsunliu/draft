@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:18.3-alpine
+    image: postgres:18.3-alpine@sha256:54451ecb8ab38c24c3ec123f2fd501303a3a1856a5c66e98cecf2460d5e1e9d7
     restart: always
     ports:
       - "127.0.0.1:0:5432"
@@ -13,7 +13,7 @@ services:
       - "log_statement=all"
 
   postgres-init:
-    image: flyway/flyway:12-alpine
+    image: flyway/flyway:12-alpine@sha256:1849e8e9a8878559183692e66eeae67249a6e17514cfac952177bf0178ab2fa9
     depends_on:
       - postgres
     restart: on-failure
@@ -30,7 +30,7 @@ services:
       - "migrate"
 
   mariadb:
-    image: mariadb:11.8
+    image: mariadb:11.8@sha256:78a5047d3ba33975f183f183c2464cc7f1eab13ec8667e57cc9a5821d6da7577
     restart: always
     ports:
       - "127.0.0.1:0:3306"
@@ -44,7 +44,7 @@ services:
       - "--general-log-file=/var/log/mysql/general.log"
 
   mariadb-init:
-    image: flyway/flyway:12-alpine
+    image: flyway/flyway:12-alpine@sha256:1849e8e9a8878559183692e66eeae67249a6e17514cfac952177bf0178ab2fa9
     depends_on:
       - mariadb
     restart: on-failure
@@ -61,7 +61,7 @@ services:
       - "migrate"
 
   sqs:
-    image: softwaremill/elasticmq-native:latest
+    image: softwaremill/elasticmq-native:latest@sha256:e4580ab9ad1bd5cd37b4ba04911bc5ccc8cd2d9ab4de56ece65acee71c24e05c
     restart: always
     ports:
       - "127.0.0.1:0:9324"
@@ -72,7 +72,7 @@ services:
         target: /opt/elasticmq.conf
 
   sqs-ui:
-    image: softwaremill/elasticmq-ui:latest
+    image: softwaremill/elasticmq-ui:latest@sha256:549f467ed95d7465cb471b43cd01a8691f5ac0fa5debc0d49ba65a73341c07fb
     ports:
       - "127.0.0.1:0:3000"
     environment:
@@ -81,7 +81,7 @@ services:
       - sqs
 
   rabbitmq:
-    image: rabbitmq:4-management-alpine
+    image: rabbitmq:4-management-alpine@sha256:8724c6573b43d315bcec914f16a509d0b5faf5f3b281a832b484ece0bbcbe914
     restart: always
     ports:
       - "127.0.0.1:0:5672"
