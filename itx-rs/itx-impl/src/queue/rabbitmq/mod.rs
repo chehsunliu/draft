@@ -70,8 +70,8 @@ impl MessageQueue for RabbitMessageQueue {
         let channel = self.publish_chan().await?;
         channel
             .basic_publish(
-                "", // default exchange — routing_key acts as queue name
-                &self.queue_name,
+                "".into(), // default exchange — routing_key acts as queue name
+                self.queue_name.as_str().into(),
                 BasicPublishOptions::default(),
                 body.as_bytes(),
                 BasicProperties::default().with_delivery_mode(2), // persistent
@@ -87,8 +87,8 @@ impl MessageQueue for RabbitMessageQueue {
         let channel = self.consume_chan().await?;
         let mut consumer = channel
             .basic_consume(
-                &self.queue_name,
-                &self.consumer_tag,
+                self.queue_name.as_str().into(),
+                self.consumer_tag.as_str().into(),
                 BasicConsumeOptions::default(),
                 FieldTable::default(),
             )
