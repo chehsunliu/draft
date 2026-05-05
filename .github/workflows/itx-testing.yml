@@ -1,4 +1,4 @@
-name: ITX Testing in Pytest
+name: ITX Testing
 
 on:
   pull_request:

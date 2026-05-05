@@ -1,6 +1,6 @@
 # ITX
 
-[![ITX Testing in Pytest](https://github.com/chehsunliu/itx/actions/workflows/itx-testing-in-pytest.yml/badge.svg)](https://github.com/chehsunliu/itx/actions/workflows/itx-testing-in-pytest.yml)
+[![ITX Testing](https://github.com/chehsunliu/itx/actions/workflows/itx-testing.yml/badge.svg)](https://github.com/chehsunliu/itx/actions/workflows/itx-testing.yml)
 
 A demonstration project for performing integration testing on multi-module backend systems using **Pytest** as the test runner.
 
