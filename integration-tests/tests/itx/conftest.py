@@ -32,17 +32,6 @@ artifact_profiles: dict[str, ArtifactProfile] = {
         backend_cmd=["bin/itx-backend"],
         control_worker_cmd=["bin/itx-control-worker"],
     ),
-    "java": ArtifactProfile(
-        cwd=repo_root / "itx-java",
-        build_cmd=["./gradlew", ":itx-backend:bootJar", ":itx-worker:bootJar"],
-        backend_cmd=["java", "-jar", "itx-backend/build/libs/itx-backend.jar"],
-        control_worker_cmd=[
-            "java",
-            "-jar",
-            "itx-worker/build/libs/itx-worker.jar",
-            "--mode=control",
-        ],
-    ),
     "kotlin": ArtifactProfile(
         cwd=repo_root / "itx-kt",
         build_cmd=["./gradlew", ":itx-backend:shadowJar", ":itx-worker:shadowJar"],

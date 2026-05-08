@@ -21,12 +21,6 @@
 2. `go test ./...`
 3. `go build ./...`
 
-### `itx-java`
-
-1. `./gradlew spotlessApply`
-2. `./gradlew check`
-3. `./gradlew :itx-backend:bootJar :itx-worker:bootJar`
-
 ### `itx-kt`
 
 1. `./gradlew spotlessApply`
