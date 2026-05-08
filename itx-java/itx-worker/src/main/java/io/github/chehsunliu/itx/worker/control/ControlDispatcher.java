@@ -5,28 +5,27 @@ import io.github.chehsunliu.itx.contract.email.SendEmailMessage;
 import io.github.chehsunliu.itx.contract.queue.MessageHandler;
 import io.github.chehsunliu.itx.contract.queue.message.MessageBody;
 import io.github.chehsunliu.itx.contract.queue.message.PostCreatedMessageBody;
-import io.github.chehsunliu.itx.impl.repo.entity.PostEntity;
-import io.github.chehsunliu.itx.impl.repo.entity.UserEntity;
-import io.github.chehsunliu.itx.impl.repo.jpa.PostJpaRepo;
-import io.github.chehsunliu.itx.impl.repo.jpa.SubscriptionJpaRepo;
-import io.github.chehsunliu.itx.impl.repo.jpa.UserJpaRepo;
+import io.github.chehsunliu.itx.contract.repo.Post;
+import io.github.chehsunliu.itx.contract.repo.PostRepo;
+import io.github.chehsunliu.itx.contract.repo.SubscriptionRepo;
+import io.github.chehsunliu.itx.contract.repo.User;
+import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Component
-@Profile("control")
+@ConditionalOnProperty(name = "itx.worker.mode", havingValue = "control")
 @RequiredArgsConstructor
 public class ControlDispatcher implements MessageHandler {
 
-  private final PostJpaRepo postRepo;
-  private final UserJpaRepo userRepo;
-  private final SubscriptionJpaRepo subscriptionRepo;
+  private final PostRepo postRepo;
+  private final UserRepo userRepo;
+  private final SubscriptionRepo subscriptionRepo;
   private final EmailClient emailClient;
   private final ObjectMapper objectMapper;
 
@@ -40,24 +39,17 @@ public class ControlDispatcher implements MessageHandler {
     }
   }
 
-  @Transactional(readOnly = true)
-  void handlePostCreated(PostCreatedMessageBody body) {
-    PostEntity post =
-        postRepo
-            .findById(body.postId())
-            .orElseThrow(() -> new IllegalStateException("missing post: " + body.postId()));
-    UserEntity author =
-        userRepo
-            .findById(body.authorId())
-            .orElseThrow(() -> new IllegalStateException("missing author: " + body.authorId()));
-    List<UserEntity> subscribers = subscriptionRepo.listSubscribersByAuthorId(body.authorId());
+  private void handlePostCreated(PostCreatedMessageBody body) {
+    Post post = postRepo.get(PostRepo.GetParams.builder().id(body.postId()).build());
+    User author = userRepo.get(body.authorId());
+    List<User> subscribers = subscriptionRepo.listSubscribers(body.authorId());
     log.info(
         "sending post.created notifications post_id={} author={} subscribers={}",
         body.postId(),
         author.getEmail(),
         subscribers.size());
 
-    for (UserEntity subscriber : subscribers) {
+    for (User subscriber : subscribers) {
       emailClient.send(
           SendEmailMessage.builder()
               .to(subscriber.getEmail())

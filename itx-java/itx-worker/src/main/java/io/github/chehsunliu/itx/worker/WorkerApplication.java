@@ -2,13 +2,16 @@ package io.github.chehsunliu.itx.worker;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
+@ComponentScan(basePackages = {"io.github.chehsunliu.itx.worker", "io.github.chehsunliu.itx.impl"})
+@ConfigurationPropertiesScan("io.github.chehsunliu.itx.impl")
 @EntityScan("io.github.chehsunliu.itx.impl.repo.entity")
 @EnableJpaRepositories("io.github.chehsunliu.itx.impl.repo.jpa")
 public class WorkerApplication {
@@ -29,16 +32,13 @@ public class WorkerApplication {
       }
     }
     System.setProperty("itx.worker.mode", mode);
+    // Compute mode keeps DB autoconfig dormant by leaving itx.db.provider unset (the
+    // application.yml default is the empty string). Control mode opts in.
+    if ("control".equals(mode)) {
+      System.setProperty(
+          "itx.db.provider", System.getenv().getOrDefault("ITX_DB_PROVIDER", "postgres"));
+    }
 
-    String dbProvider = System.getenv().getOrDefault("ITX_DB_PROVIDER", "postgres");
-    // Compute mode never reads from the DB, so we keep its profile DB-less to
-    // avoid forcing DB env vars on compute pods.
-    String activeProfiles = "control".equals(mode) ? mode + "," + dbProvider : mode;
-    System.setProperty("spring.profiles.active", activeProfiles);
-
-    new SpringApplicationBuilder(WorkerApplication.class)
-        .web(WebApplicationType.NONE)
-        .build()
-        .run(rest.toArray(new String[0]));
+    SpringApplication.run(WorkerApplication.class, rest.toArray(new String[0]));
   }
 }

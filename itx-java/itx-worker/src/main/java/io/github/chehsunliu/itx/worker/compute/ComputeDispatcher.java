@@ -2,12 +2,12 @@ package io.github.chehsunliu.itx.worker.compute;
 
 import io.github.chehsunliu.itx.contract.queue.MessageHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@Profile("compute")
+@ConditionalOnProperty(name = "itx.worker.mode", havingValue = "compute")
 public class ComputeDispatcher implements MessageHandler {
   @Override
   public void handle(String body) {

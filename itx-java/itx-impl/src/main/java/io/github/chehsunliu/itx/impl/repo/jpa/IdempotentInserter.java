@@ -1,16 +1,14 @@
-package io.github.chehsunliu.itx.backend.service;
+package io.github.chehsunliu.itx.impl.repo.jpa;
 
 import io.github.chehsunliu.itx.impl.repo.entity.SubscriptionEntity;
 import io.github.chehsunliu.itx.impl.repo.entity.SubscriptionId;
 import io.github.chehsunliu.itx.impl.repo.entity.TagEntity;
 import io.github.chehsunliu.itx.impl.repo.entity.UserEntity;
-import io.github.chehsunliu.itx.impl.repo.jpa.SubscriptionJpaRepo;
-import io.github.chehsunliu.itx.impl.repo.jpa.TagJpaRepo;
-import io.github.chehsunliu.itx.impl.repo.jpa.UserJpaRepo;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
  * collision rolls back only the inner attempt and the caller's outer transaction stays clean. On
  * conflict we re-read the now-existing row.
  */
-@Service
+@Component
+@ConditionalOnExpression("!'${itx.db.provider:}'.isEmpty()")
 @RequiredArgsConstructor
-public class IdempotentInserter {
+class IdempotentInserter {
 
   private final UserJpaRepo userRepo;
   private final TagJpaRepo tagRepo;

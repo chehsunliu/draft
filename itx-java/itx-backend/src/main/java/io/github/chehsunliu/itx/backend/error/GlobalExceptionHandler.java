@@ -1,6 +1,7 @@
 package io.github.chehsunliu.itx.backend.error;
 
 import io.github.chehsunliu.itx.contract.queue.QueueException;
+import io.github.chehsunliu.itx.contract.repo.RepoNotFoundException;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,11 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(BackendException.class)
   ResponseEntity<Map<String, Object>> handleBackend(BackendException e) {
     return body(e.getStatus(), e.getMessage());
+  }
+
+  @ExceptionHandler(RepoNotFoundException.class)
+  ResponseEntity<Map<String, Object>> handleRepoNotFound(RepoNotFoundException e) {
+    return body(HttpStatus.NOT_FOUND, "not found");
   }
 
   @ExceptionHandler(QueueException.class)

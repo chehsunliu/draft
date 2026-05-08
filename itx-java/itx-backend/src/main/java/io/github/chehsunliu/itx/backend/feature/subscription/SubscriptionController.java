@@ -2,8 +2,8 @@ package io.github.chehsunliu.itx.backend.feature.subscription;
 
 import io.github.chehsunliu.itx.backend.error.BackendException;
 import io.github.chehsunliu.itx.backend.middleware.ItxContext;
-import io.github.chehsunliu.itx.backend.service.SubscriptionService;
-import io.github.chehsunliu.itx.backend.service.UserService;
+import io.github.chehsunliu.itx.contract.repo.SubscriptionRepo;
+import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SubscriptionController {
 
-  private final UserService userService;
-  private final SubscriptionService subscriptionService;
+  private final UserRepo userRepo;
+  private final SubscriptionRepo subscriptionRepo;
 
   @PutMapping("/{authorId}")
   ResponseEntity<Void> subscribe(HttpServletRequest req, @PathVariable UUID authorId) {
@@ -32,10 +32,15 @@ public class SubscriptionController {
       throw BackendException.unknown("missing X-Itx-User-Email");
     }
     // Pre-check the target so we return 404 cleanly instead of an FK violation.
-    userService.get(authorId);
+    userRepo.get(authorId);
     // Ensure the subscriber row exists; safe to call before /me has ever been hit.
-    userService.upsert(ctx.getUserId(), ctx.getUserEmail());
-    subscriptionService.subscribe(ctx.getUserId(), authorId);
+    userRepo.upsert(
+        UserRepo.UpsertParams.builder().id(ctx.getUserId()).email(ctx.getUserEmail()).build());
+    subscriptionRepo.subscribe(
+        SubscriptionRepo.SubscribeParams.builder()
+            .subscriberId(ctx.getUserId())
+            .authorId(authorId)
+            .build());
     return ResponseEntity.noContent().build();
   }
 
@@ -45,8 +50,12 @@ public class SubscriptionController {
     if (ctx.getUserId().equals(authorId)) {
       throw BackendException.badRequest("cannot unsubscribe from yourself");
     }
-    userService.get(authorId);
-    subscriptionService.unsubscribe(ctx.getUserId(), authorId);
+    userRepo.get(authorId);
+    subscriptionRepo.unsubscribe(
+        SubscriptionRepo.UnsubscribeParams.builder()
+            .subscriberId(ctx.getUserId())
+            .authorId(authorId)
+            .build());
     return ResponseEntity.noContent().build();
   }
 }
