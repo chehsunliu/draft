@@ -25,7 +25,7 @@
 
 1. `./gradlew spotlessApply`
 2. `./gradlew check`
-3. `make build` (produces `bin/itx-backend`, `bin/itx-control-worker`, `bin/itx-compute-worker`)
+3. `./gradlew :itx-backend:bootJar :itx-worker:bootJar`
 
 ### `./integration-tests/pytest`:
 

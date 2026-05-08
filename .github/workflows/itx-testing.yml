@@ -178,7 +178,7 @@ jobs:
 
       - name: Build binaries
         working-directory: itx-java
-        run: make build
+        run: ./gradlew :itx-backend:bootJar :itx-worker:bootJar
 
       - name: Start containers
         run: docker compose up -d
