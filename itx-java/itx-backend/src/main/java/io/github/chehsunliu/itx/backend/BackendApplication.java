@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+@SpringBootApplication
+@EntityScan("io.github.chehsunliu.itx.impl.repo.entity")
+@EnableJpaRepositories("io.github.chehsunliu.itx.impl.repo.jpa")
 public class BackendApplication {
 
   public static void main(String[] args) {
@@ -28,6 +31,8 @@ public class BackendApplication {
         rest.add(a);
       }
     }
+    String dbProvider = System.getenv().getOrDefault("ITX_DB_PROVIDER", "postgres");
+    System.setProperty("spring.profiles.active", dbProvider);
     ConfigurableApplicationContext ctx =
         SpringApplication.run(BackendApplication.class, rest.toArray(new String[0]));
     Signals.installCleanShutdown(ctx);

@@ -2,9 +2,9 @@ package io.github.chehsunliu.itx.backend.feature.user;
 
 import io.github.chehsunliu.itx.backend.error.BackendException;
 import io.github.chehsunliu.itx.backend.middleware.ItxContext;
-import io.github.chehsunliu.itx.contract.repo.SubscriptionRepo;
+import io.github.chehsunliu.itx.backend.service.SubscriptionService;
+import io.github.chehsunliu.itx.backend.service.UserService;
 import io.github.chehsunliu.itx.contract.repo.User;
-import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.UUID;
@@ -21,8 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
 
-  private final UserRepo userRepo;
-  private final SubscriptionRepo subscriptionRepo;
+  private final UserService userService;
+  private final SubscriptionService subscriptionService;
   private final UserMapper mapper;
 
   @Value
@@ -37,17 +37,15 @@ public class UserController {
     if (ctx.getUserEmail() == null) {
       throw BackendException.unknown("missing X-Itx-User-Email");
     }
-    User user =
-        userRepo.upsert(
-            UserRepo.UpsertParams.builder().id(ctx.getUserId()).email(ctx.getUserEmail()).build());
+    User user = userService.upsert(ctx.getUserId(), ctx.getUserEmail());
     return mapper.toDto(user);
   }
 
   @GetMapping("/{id}/subscriptions")
   ListSubscriptionsResponse listSubscriptions(@PathVariable UUID id) {
     // Pre-check the subject so an unknown user yields 404, not an empty list.
-    userRepo.get(id);
-    List<User> authors = subscriptionRepo.listAuthors(id);
+    userService.get(id);
+    List<User> authors = subscriptionService.listAuthors(id);
     return ListSubscriptionsResponse.builder()
         .items(authors.stream().map(mapper::toDto).toList())
         .build();

@@ -16,6 +16,9 @@ dependencies {
         exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
     }
 
+    runtimeOnly(libs.postgres)
+    runtimeOnly(libs.mariadb)
+
     annotationProcessor(libs.mapstruct.processor)
     annotationProcessor(libs.lombok.mapstruct.binding)
     implementation(libs.mapstruct)

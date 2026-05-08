@@ -5,16 +5,12 @@ import java.util.List;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@SpringBootApplication(
-    exclude = {
-      DataSourceAutoConfiguration.class,
-      DataSourceTransactionManagerAutoConfiguration.class,
-      JdbcTemplateAutoConfiguration.class,
-    })
+@SpringBootApplication
+@EntityScan("io.github.chehsunliu.itx.impl.repo.entity")
+@EnableJpaRepositories("io.github.chehsunliu.itx.impl.repo.jpa")
 public class WorkerApplication {
 
   public static void main(String[] args) {
@@ -33,7 +29,12 @@ public class WorkerApplication {
       }
     }
     System.setProperty("itx.worker.mode", mode);
-    System.setProperty("spring.profiles.active", mode);
+
+    String dbProvider = System.getenv().getOrDefault("ITX_DB_PROVIDER", "postgres");
+    // Compute mode never reads from the DB, so we keep its profile DB-less to
+    // avoid forcing DB env vars on compute pods.
+    String activeProfiles = "control".equals(mode) ? mode + "," + dbProvider : mode;
+    System.setProperty("spring.profiles.active", activeProfiles);
 
     new SpringApplicationBuilder(WorkerApplication.class)
         .web(WebApplicationType.NONE)
