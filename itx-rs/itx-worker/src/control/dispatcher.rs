@@ -38,6 +38,7 @@ impl ControlDispatcher {
                 .await?;
         }
 
+        self.state.post_repo.mark_notified(body.post_id).await?;
         Ok(())
     }
 }

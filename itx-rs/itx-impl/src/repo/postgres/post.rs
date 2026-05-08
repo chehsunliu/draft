@@ -78,9 +78,16 @@ impl PostRepo for PostgresPostRepo {
         let limit = if params.limit == 0 { 50 } else { params.limit as i64 };
         let offset = params.offset as i64;
 
-        let rows: Vec<(PostId, AuthorId, String, String, time::OffsetDateTime)> = match params.author_id {
+        let rows: Vec<(
+            PostId,
+            AuthorId,
+            String,
+            String,
+            time::OffsetDateTime,
+            Option<time::OffsetDateTime>,
+        )> = match params.author_id {
             Some(author_id) => sqlx::query_as(
-                "SELECT id, author_id, title, body, created_at \
+                "SELECT id, author_id, title, body, created_at, notified_at \
                      FROM posts WHERE author_id = $1 \
                      ORDER BY id DESC LIMIT $2 OFFSET $3",
             )
@@ -91,7 +98,7 @@ impl PostRepo for PostgresPostRepo {
             .await
             .map_err(err)?,
             None => sqlx::query_as(
-                "SELECT id, author_id, title, body, created_at \
+                "SELECT id, author_id, title, body, created_at, notified_at \
                      FROM posts ORDER BY id DESC LIMIT $1 OFFSET $2",
             )
             .bind(limit)
@@ -106,26 +113,33 @@ impl PostRepo for PostgresPostRepo {
 
         Ok(rows
             .into_iter()
-            .map(|(id, author_id, title, body, created_at)| Post {
+            .map(|(id, author_id, title, body, created_at, notified_at)| Post {
                 id,
                 author_id,
                 title,
                 body,
                 tags: tag_map.remove(&id).unwrap_or_default(),
                 created_at,
+                notified_at,
             })
             .collect())
     }
 
     async fn get(&self, params: GetParams) -> Result<Post, RepoError> {
-        let row: Option<(PostId, AuthorId, String, String, time::OffsetDateTime)> =
-            sqlx::query_as("SELECT id, author_id, title, body, created_at FROM posts WHERE id = $1")
-                .bind(params.id)
-                .fetch_optional(&self.pool)
-                .await
-                .map_err(err)?;
+        let row: Option<(
+            PostId,
+            AuthorId,
+            String,
+            String,
+            time::OffsetDateTime,
+            Option<time::OffsetDateTime>,
+        )> = sqlx::query_as("SELECT id, author_id, title, body, created_at, notified_at FROM posts WHERE id = $1")
+            .bind(params.id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(err)?;
 
-        let Some((id, author_id, title, body, created_at)) = row else {
+        let Some((id, author_id, title, body, created_at, notified_at)) = row else {
             return Err(RepoError::NotFound);
         };
         let mut tag_map = fetch_tags_for(&self.pool, &[id]).await?;
@@ -136,6 +150,7 @@ impl PostRepo for PostgresPostRepo {
             body,
             tags: tag_map.remove(&id).unwrap_or_default(),
             created_at,
+            notified_at,
         })
     }
 
@@ -165,14 +180,22 @@ impl PostRepo for PostgresPostRepo {
             body: params.body,
             tags: params.tags,
             created_at,
+            notified_at: None,
         })
     }
 
     async fn update(&self, params: UpdateParams) -> Result<Post, RepoError> {
         let mut tx = self.pool.begin().await.map_err(err)?;
 
-        let existing: Option<(PostId, AuthorId, String, String, time::OffsetDateTime)> = sqlx::query_as(
-            "SELECT id, author_id, title, body, created_at \
+        let existing: Option<(
+            PostId,
+            AuthorId,
+            String,
+            String,
+            time::OffsetDateTime,
+            Option<time::OffsetDateTime>,
+        )> = sqlx::query_as(
+            "SELECT id, author_id, title, body, created_at, notified_at \
                  FROM posts WHERE id = $1 AND author_id = $2 FOR UPDATE",
         )
         .bind(params.id)
@@ -181,7 +204,7 @@ impl PostRepo for PostgresPostRepo {
         .await
         .map_err(err)?;
 
-        let Some((_, _, mut title, mut body, created_at)) = existing else {
+        let Some((_, _, mut title, mut body, created_at, notified_at)) = existing else {
             return Err(RepoError::NotFound);
         };
 
@@ -230,6 +253,7 @@ impl PostRepo for PostgresPostRepo {
             body,
             tags,
             created_at,
+            notified_at,
         })
     }
 
@@ -243,6 +267,15 @@ impl PostRepo for PostgresPostRepo {
         if result.rows_affected() == 0 {
             return Err(RepoError::NotFound);
         }
+        Ok(())
+    }
+
+    async fn mark_notified(&self, id: PostId) -> Result<(), RepoError> {
+        sqlx::query("UPDATE posts SET notified_at = now() WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(err)?;
         Ok(())
     }
 }

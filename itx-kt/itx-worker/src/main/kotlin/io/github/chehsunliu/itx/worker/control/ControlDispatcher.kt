@@ -47,5 +47,6 @@ class ControlDispatcher(
                 ),
             )
         }
+        postRepo.markNotified(body.postId)
     }
 }

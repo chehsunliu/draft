@@ -27,13 +27,13 @@ func (r *postRepo) List(ctx context.Context, params post.ListParams) ([]post.Pos
 	)
 	if params.AuthorID != nil {
 		rows, err = r.db.QueryContext(ctx,
-			"SELECT id, author_id, title, body, created_at "+
+			"SELECT id, author_id, title, body, created_at, notified_at "+
 				"FROM posts WHERE author_id = ? "+
 				"ORDER BY id DESC LIMIT ? OFFSET ?",
 			params.AuthorID.String(), limit, offset)
 	} else {
 		rows, err = r.db.QueryContext(ctx,
-			"SELECT id, author_id, title, body, created_at "+
+			"SELECT id, author_id, title, body, created_at, notified_at "+
 				"FROM posts ORDER BY id DESC LIMIT ? OFFSET ?",
 			limit, offset)
 	}
@@ -47,11 +47,16 @@ func (r *postRepo) List(ctx context.Context, params post.ListParams) ([]post.Pos
 	for rows.Next() {
 		var p post.Post
 		var authorID string
-		if err := rows.Scan(&p.ID, &authorID, &p.Title, &p.Body, &p.CreatedAt); err != nil {
+		var notifiedAt sql.NullTime
+		if err := rows.Scan(&p.ID, &authorID, &p.Title, &p.Body, &p.CreatedAt, &notifiedAt); err != nil {
 			return nil, err
 		}
 		if err := p.AuthorID.UnmarshalText([]byte(authorID)); err != nil {
 			return nil, err
+		}
+		if notifiedAt.Valid {
+			t := notifiedAt.Time
+			p.NotifiedAt = &t
 		}
 		posts = append(posts, p)
 		ids = append(ids, p.ID)
@@ -75,11 +80,12 @@ func (r *postRepo) List(ctx context.Context, params post.ListParams) ([]post.Pos
 
 func (r *postRepo) Get(ctx context.Context, params post.GetParams) (post.Post, error) {
 	row := r.db.QueryRowContext(ctx,
-		"SELECT id, author_id, title, body, created_at FROM posts WHERE id = ?",
+		"SELECT id, author_id, title, body, created_at, notified_at FROM posts WHERE id = ?",
 		params.ID)
 	var p post.Post
 	var authorID string
-	if err := row.Scan(&p.ID, &authorID, &p.Title, &p.Body, &p.CreatedAt); err != nil {
+	var notifiedAt sql.NullTime
+	if err := row.Scan(&p.ID, &authorID, &p.Title, &p.Body, &p.CreatedAt, &notifiedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return post.Post{}, post.ErrNotFound
 		}
@@ -87,6 +93,10 @@ func (r *postRepo) Get(ctx context.Context, params post.GetParams) (post.Post, e
 	}
 	if err := p.AuthorID.UnmarshalText([]byte(authorID)); err != nil {
 		return post.Post{}, err
+	}
+	if notifiedAt.Valid {
+		t := notifiedAt.Time
+		p.NotifiedAt = &t
 	}
 
 	tagMap, err := fetchTagsFor(ctx, r.db, []int64{p.ID})
@@ -156,10 +166,11 @@ func (r *postRepo) Update(ctx context.Context, params post.UpdateParams) (post.P
 
 	var p post.Post
 	var authorID string
+	var notifiedAt sql.NullTime
 	err = tx.QueryRowContext(ctx,
-		"SELECT id, author_id, title, body, created_at FROM posts "+
+		"SELECT id, author_id, title, body, created_at, notified_at FROM posts "+
 			"WHERE id = ? AND author_id = ? FOR UPDATE",
-		params.ID, params.AuthorID.String()).Scan(&p.ID, &authorID, &p.Title, &p.Body, &p.CreatedAt)
+		params.ID, params.AuthorID.String()).Scan(&p.ID, &authorID, &p.Title, &p.Body, &p.CreatedAt, &notifiedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return post.Post{}, post.ErrNotFound
@@ -167,6 +178,10 @@ func (r *postRepo) Update(ctx context.Context, params post.UpdateParams) (post.P
 		return post.Post{}, err
 	}
 	p.AuthorID = params.AuthorID
+	if notifiedAt.Valid {
+		t := notifiedAt.Time
+		p.NotifiedAt = &t
+	}
 
 	if params.Title != nil {
 		p.Title = *params.Title
@@ -236,6 +251,12 @@ func (r *postRepo) Delete(ctx context.Context, params post.DeleteParams) error {
 		return post.ErrNotFound
 	}
 	return nil
+}
+
+func (r *postRepo) MarkNotified(ctx context.Context, id int64) error {
+	_, err := r.db.ExecContext(ctx,
+		"UPDATE posts SET notified_at = NOW() WHERE id = ?", id)
+	return err
 }
 
 func upsertTagsTx(ctx context.Context, tx *sql.Tx, names []string) ([]int64, error) {
