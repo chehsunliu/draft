@@ -23,6 +23,7 @@ internal class PostgresPostRepo(
         val title: String,
         val body: String,
         val createdAt: OffsetDateTime,
+        val notifiedAt: OffsetDateTime?,
     )
 
     private fun java.sql.ResultSet.toRow(): Row =
@@ -32,9 +33,10 @@ internal class PostgresPostRepo(
             title = getString("title"),
             body = getString("body"),
             createdAt = getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC),
+            notifiedAt = getTimestamp("notified_at")?.toInstant()?.atOffset(ZoneOffset.UTC),
         )
 
-    private fun Row.toPost(tags: List<String>): Post = Post(id, authorId, title, body, tags, createdAt)
+    private fun Row.toPost(tags: List<String>): Post = Post(id, authorId, title, body, tags, createdAt, notifiedAt)
 
     override suspend fun list(params: PostRepo.ListParams): List<Post> =
         ds.useConnection { conn ->
@@ -44,7 +46,7 @@ internal class PostgresPostRepo(
                     conn
                         .prepareStatement(
                             """
-                        SELECT id, author_id, title, body, created_at
+                        SELECT id, author_id, title, body, created_at, notified_at
                         FROM posts WHERE author_id = ?
                         ORDER BY id DESC LIMIT ? OFFSET ?
                         """,
@@ -56,7 +58,7 @@ internal class PostgresPostRepo(
                     conn
                         .prepareStatement(
                             """
-                        SELECT id, author_id, title, body, created_at
+                        SELECT id, author_id, title, body, created_at, notified_at
                         FROM posts ORDER BY id DESC LIMIT ? OFFSET ?
                         """,
                         ).use { ps ->
@@ -73,7 +75,7 @@ internal class PostgresPostRepo(
             val row =
                 conn
                     .prepareStatement(
-                        "SELECT id, author_id, title, body, created_at FROM posts WHERE id = ?",
+                        "SELECT id, author_id, title, body, created_at, notified_at FROM posts WHERE id = ?",
                     ).use { ps ->
                         ps.bindAll(params.id)
                         ps.executeQuery().use { rs -> rs.firstOrNull { it.toRow() } }
@@ -89,7 +91,7 @@ internal class PostgresPostRepo(
                     .prepareStatement(
                         """
                     INSERT INTO posts (author_id, title, body) VALUES (?, ?, ?)
-                    RETURNING id, author_id, title, body, created_at
+                    RETURNING id, author_id, title, body, created_at, notified_at
                     """,
                     ).use { ps ->
                         ps.bindAll(params.authorId, params.title, params.body)
@@ -108,7 +110,7 @@ internal class PostgresPostRepo(
                 conn
                     .prepareStatement(
                         """
-                    SELECT id, author_id, title, body, created_at
+                    SELECT id, author_id, title, body, created_at, notified_at
                     FROM posts WHERE id = ? AND author_id = ? FOR UPDATE
                     """,
                     ).use { ps ->
@@ -147,7 +149,7 @@ internal class PostgresPostRepo(
                         }
                 }
 
-            Post(params.id, params.authorId, title, body, tags, existing.createdAt)
+            Post(params.id, params.authorId, title, body, tags, existing.createdAt, existing.notifiedAt)
         }
 
     override suspend fun delete(params: PostRepo.DeleteParams) {
@@ -158,6 +160,15 @@ internal class PostgresPostRepo(
                     it.executeUpdate()
                 }
             if (rows == 0) throw RepoNotFoundException()
+        }
+    }
+
+    override suspend fun markNotified(id: Long) {
+        ds.useConnection { conn ->
+            conn.prepareStatement("UPDATE posts SET notified_at = now() WHERE id = ?").use {
+                it.bindAll(id)
+                it.executeUpdate()
+            }
         }
     }
 

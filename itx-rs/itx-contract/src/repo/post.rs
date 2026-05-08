@@ -13,6 +13,7 @@ pub struct Post {
     pub body: String,
     pub tags: Vec<String>,
     pub created_at: time::OffsetDateTime,
+    pub notified_at: Option<time::OffsetDateTime>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -66,4 +67,7 @@ pub trait PostRepo: Send + Sync {
     /// Deletes a post owned by `params.author_id`. Returns `RepoError::NotFound`
     /// if the post does not exist or is not owned by the caller.
     async fn delete(&self, params: DeleteParams) -> Result<(), RepoError>;
+
+    /// Stamps `notified_at = now()` for the given post. Idempotent — safe to retry.
+    async fn mark_notified(&self, id: PostId) -> Result<(), RepoError>;
 }

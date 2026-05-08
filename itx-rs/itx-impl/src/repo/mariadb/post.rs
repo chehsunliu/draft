@@ -86,9 +86,16 @@ impl PostRepo for MariaDbPostRepo {
         let limit = if params.limit == 0 { 50 } else { params.limit as i64 };
         let offset = params.offset as i64;
 
-        let rows: Vec<(PostId, String, String, String, time::OffsetDateTime)> = match params.author_id {
+        let rows: Vec<(
+            PostId,
+            String,
+            String,
+            String,
+            time::OffsetDateTime,
+            Option<time::OffsetDateTime>,
+        )> = match params.author_id {
             Some(author_id) => sqlx::query_as(
-                "SELECT id, author_id, title, body, created_at \
+                "SELECT id, author_id, title, body, created_at, notified_at \
                      FROM posts WHERE author_id = ? \
                      ORDER BY id DESC LIMIT ? OFFSET ?",
             )
@@ -99,7 +106,7 @@ impl PostRepo for MariaDbPostRepo {
             .await
             .map_err(err)?,
             None => sqlx::query_as(
-                "SELECT id, author_id, title, body, created_at \
+                "SELECT id, author_id, title, body, created_at, notified_at \
                      FROM posts ORDER BY id DESC LIMIT ? OFFSET ?",
             )
             .bind(limit)
@@ -113,7 +120,7 @@ impl PostRepo for MariaDbPostRepo {
         let mut tag_map = fetch_tags_for(&self.pool, &ids).await?;
 
         rows.into_iter()
-            .map(|(id, author_str, title, body, created_at)| {
+            .map(|(id, author_str, title, body, created_at, notified_at)| {
                 Ok(Post {
                     id,
                     author_id: parse_author(&author_str)?,
@@ -121,20 +128,27 @@ impl PostRepo for MariaDbPostRepo {
                     body,
                     tags: tag_map.remove(&id).unwrap_or_default(),
                     created_at,
+                    notified_at,
                 })
             })
             .collect()
     }
 
     async fn get(&self, params: GetParams) -> Result<Post, RepoError> {
-        let row: Option<(PostId, String, String, String, time::OffsetDateTime)> =
-            sqlx::query_as("SELECT id, author_id, title, body, created_at FROM posts WHERE id = ?")
-                .bind(params.id)
-                .fetch_optional(&self.pool)
-                .await
-                .map_err(err)?;
+        let row: Option<(
+            PostId,
+            String,
+            String,
+            String,
+            time::OffsetDateTime,
+            Option<time::OffsetDateTime>,
+        )> = sqlx::query_as("SELECT id, author_id, title, body, created_at, notified_at FROM posts WHERE id = ?")
+            .bind(params.id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(err)?;
 
-        let Some((id, author_str, title, body, created_at)) = row else {
+        let Some((id, author_str, title, body, created_at, notified_at)) = row else {
             return Err(RepoError::NotFound);
         };
         let mut tag_map = fetch_tags_for(&self.pool, &[id]).await?;
@@ -145,6 +159,7 @@ impl PostRepo for MariaDbPostRepo {
             body,
             tags: tag_map.remove(&id).unwrap_or_default(),
             created_at,
+            notified_at,
         })
     }
 
@@ -178,14 +193,22 @@ impl PostRepo for MariaDbPostRepo {
             body: params.body,
             tags: params.tags,
             created_at,
+            notified_at: None,
         })
     }
 
     async fn update(&self, params: UpdateParams) -> Result<Post, RepoError> {
         let mut tx = self.pool.begin().await.map_err(err)?;
 
-        let existing: Option<(PostId, String, String, String, time::OffsetDateTime)> = sqlx::query_as(
-            "SELECT id, author_id, title, body, created_at \
+        let existing: Option<(
+            PostId,
+            String,
+            String,
+            String,
+            time::OffsetDateTime,
+            Option<time::OffsetDateTime>,
+        )> = sqlx::query_as(
+            "SELECT id, author_id, title, body, created_at, notified_at \
                  FROM posts WHERE id = ? AND author_id = ? FOR UPDATE",
         )
         .bind(params.id)
@@ -194,7 +217,7 @@ impl PostRepo for MariaDbPostRepo {
         .await
         .map_err(err)?;
 
-        let Some((_, _, mut title, mut body, created_at)) = existing else {
+        let Some((_, _, mut title, mut body, created_at, notified_at)) = existing else {
             return Err(RepoError::NotFound);
         };
 
@@ -243,6 +266,7 @@ impl PostRepo for MariaDbPostRepo {
             body,
             tags,
             created_at,
+            notified_at,
         })
     }
 
@@ -256,6 +280,15 @@ impl PostRepo for MariaDbPostRepo {
         if result.rows_affected() == 0 {
             return Err(RepoError::NotFound);
         }
+        Ok(())
+    }
+
+    async fn mark_notified(&self, id: PostId) -> Result<(), RepoError> {
+        sqlx::query("UPDATE posts SET notified_at = NOW() WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(err)?;
         Ok(())
     }
 }

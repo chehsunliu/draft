@@ -33,8 +33,10 @@ def worker_proc_fixture(
     }
 
     proc = artifact_profile.spawn_control_worker(env, capture_stdout=False)
-    # Give the worker a moment to open broker connections + start consuming.
-    time.sleep(0.8)
+    # Give the worker a moment to open broker connections + start consuming. JVM-backed
+    # implementations (Kotlin) need a few seconds to boot before the SQS poll loop is actually
+    # running, so the budget has to cover them.
+    time.sleep(3)
     if proc.poll() is not None:
         raise RuntimeError(f"control worker exited early with code {proc.returncode}")
 

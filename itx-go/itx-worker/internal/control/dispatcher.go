@@ -72,5 +72,6 @@ func (d *Dispatcher) handlePostCreated(ctx context.Context, msg message.PostCrea
 			return err
 		}
 	}
-	return nil
+
+	return d.state.PostRepo.MarkNotified(ctx, msg.PostID)
 }

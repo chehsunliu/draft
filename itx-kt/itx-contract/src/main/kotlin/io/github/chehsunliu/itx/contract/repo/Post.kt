@@ -10,6 +10,7 @@ data class Post(
     val body: String,
     val tags: List<String>,
     val createdAt: OffsetDateTime,
+    val notifiedAt: OffsetDateTime? = null,
 )
 
 interface PostRepo {
@@ -31,6 +32,9 @@ interface PostRepo {
      * not exist or is not owned by the caller.
      */
     suspend fun delete(params: DeleteParams)
+
+    /** Stamps `notified_at = now()` for the given post. Idempotent — safe to retry. */
+    suspend fun markNotified(id: Long)
 
     data class ListParams(
         val authorId: UUID? = null,

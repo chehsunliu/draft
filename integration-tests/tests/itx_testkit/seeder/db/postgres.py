@@ -33,6 +33,7 @@ class PostgresDbReader(DbReader):
             "body": post.body,
             "tags": [t.name for t in post.tags],
             "created_at": post.created_at,
+            "notified_at": post.notified_at,
         }
 
     async def is_subscribed(self, subscriber_id: str, author_id: str) -> bool:
