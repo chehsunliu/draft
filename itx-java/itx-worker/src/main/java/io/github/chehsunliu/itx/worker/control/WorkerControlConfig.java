@@ -1,12 +1,14 @@
-package io.github.chehsunliu.itx.backend.state;
+package io.github.chehsunliu.itx.worker.control;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.github.chehsunliu.itx.contract.queue.MessageQueue;
+import io.github.chehsunliu.itx.contract.email.EmailClient;
 import io.github.chehsunliu.itx.contract.queue.MessageQueueFactory;
 import io.github.chehsunliu.itx.contract.repo.PostRepo;
 import io.github.chehsunliu.itx.contract.repo.SubscriptionRepo;
 import io.github.chehsunliu.itx.contract.repo.UserRepo;
+import io.github.chehsunliu.itx.impl.email.EmailProperties;
+import io.github.chehsunliu.itx.impl.email.HttpEmailClient;
 import io.github.chehsunliu.itx.impl.queue.QueueProperties;
 import io.github.chehsunliu.itx.impl.queue.rabbitmq.RabbitMessageQueueFactory;
 import io.github.chehsunliu.itx.impl.queue.rabbitmq.RabbitProperties;
@@ -23,15 +25,22 @@ import io.github.chehsunliu.itx.impl.repo.jpa.TagJpaRepo;
 import io.github.chehsunliu.itx.impl.repo.jpa.UserJpaRepo;
 import io.github.chehsunliu.itx.impl.repo.mariadb.MariadbProperties;
 import io.github.chehsunliu.itx.impl.repo.postgres.PostgresProperties;
+import io.github.chehsunliu.itx.worker.run.QueueRunner;
+import java.util.List;
 import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.hibernate.autoconfigure.HibernatePropertiesCustomizer;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import tools.jackson.databind.ObjectMapper;
 
 @Configuration
+@EnableJpaRepositories("io.github.chehsunliu.itx.impl.repo.jpa")
+@EntityScan("io.github.chehsunliu.itx.impl.repo.entity")
 @RequiredArgsConstructor
-public class AppStateConfig {
+public class WorkerControlConfig {
 
   private final DbProperties dbProps;
   private final QueueProperties queueProps;
@@ -39,6 +48,7 @@ public class AppStateConfig {
   private final MariadbProperties mariadbProps;
   private final SqsProperties sqsProps;
   private final RabbitProperties rabbitProps;
+  private final EmailProperties emailProps;
 
   @Bean
   DataSource dataSource() {
@@ -76,8 +86,6 @@ public class AppStateConfig {
     return new HikariDataSource(cfg);
   }
 
-  // MariaDB stores TIMESTAMP without offset, so normalize OffsetDateTime through UTC; UUID
-  // columns are CHAR(36) on this schema so steer Hibernate to that JDBC type.
   @Bean
   HibernatePropertiesCustomizer hibernateCustomizer() {
     return props -> {
@@ -97,11 +105,6 @@ public class AppStateConfig {
           throw new IllegalStateException(
               "unknown itx.queue.provider: " + queueProps.getProvider());
     };
-  }
-
-  @Bean(name = "controlStandardQueue")
-  MessageQueue controlStandardQueue(MessageQueueFactory factory) {
-    return factory.createControlStandardQueue();
   }
 
   @Bean
@@ -124,5 +127,27 @@ public class AppStateConfig {
   SubscriptionRepo subscriptionRepo(
       SubscriptionJpaRepo subscriptionJpaRepo, IdempotentInserter inserter) {
     return new JpaSubscriptionRepo(subscriptionJpaRepo, inserter);
+  }
+
+  @Bean
+  EmailClient emailClient() {
+    return new HttpEmailClient(emailProps);
+  }
+
+  @Bean
+  ControlDispatcher controlDispatcher(
+      PostRepo postRepo,
+      UserRepo userRepo,
+      SubscriptionRepo subscriptionRepo,
+      EmailClient emailClient,
+      ObjectMapper objectMapper) {
+    return new ControlDispatcher(postRepo, userRepo, subscriptionRepo, emailClient, objectMapper);
+  }
+
+  @Bean
+  QueueRunner controlQueueRunner(MessageQueueFactory factory, ControlDispatcher dispatcher) {
+    return new QueueRunner(
+        List.of(factory.createControlStandardQueue(), factory.createControlPremiumQueue()),
+        dispatcher);
   }
 }

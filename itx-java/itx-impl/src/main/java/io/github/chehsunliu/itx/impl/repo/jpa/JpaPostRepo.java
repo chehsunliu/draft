@@ -11,14 +11,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
-@ConditionalOnExpression("!'${itx.db.provider:}'.isEmpty()")
 @RequiredArgsConstructor
-class JpaPostRepo implements PostRepo {
+public class JpaPostRepo implements PostRepo {
 
   private final PostJpaRepo postJpaRepo;
   private final IdempotentInserter inserter;

@@ -6,9 +6,7 @@ import io.github.chehsunliu.itx.impl.repo.entity.TagEntity;
 import io.github.chehsunliu.itx.impl.repo.entity.UserEntity;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
  * collision rolls back only the inner attempt and the caller's outer transaction stays clean. On
  * conflict we re-read the now-existing row.
  */
-@Component
-@ConditionalOnExpression("!'${itx.db.provider:}'.isEmpty()")
 @RequiredArgsConstructor
-class IdempotentInserter {
+public class IdempotentInserter {
 
   private final UserJpaRepo userRepo;
   private final TagJpaRepo tagRepo;

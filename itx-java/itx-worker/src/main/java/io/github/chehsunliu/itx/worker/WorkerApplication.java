@@ -1,19 +1,25 @@
 package io.github.chehsunliu.itx.worker;
 
+import io.github.chehsunliu.itx.worker.compute.WorkerComputeConfig;
+import io.github.chehsunliu.itx.worker.control.WorkerControlConfig;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.context.annotation.FilterType;
 
+// Mode-specific configs are added explicitly by main() — exclude them from the default
+// component scan so the unwanted one isn't picked up.
 @SpringBootApplication
-@ComponentScan(basePackages = {"io.github.chehsunliu.itx.worker", "io.github.chehsunliu.itx.impl"})
+@ComponentScan(
+    excludeFilters =
+        @ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = {WorkerControlConfig.class, WorkerComputeConfig.class}))
 @ConfigurationPropertiesScan("io.github.chehsunliu.itx.impl")
-@EntityScan("io.github.chehsunliu.itx.impl.repo.entity")
-@EnableJpaRepositories("io.github.chehsunliu.itx.impl.repo.jpa")
 public class WorkerApplication {
 
   public static void main(String[] args) {
@@ -32,13 +38,22 @@ public class WorkerApplication {
       }
     }
     System.setProperty("itx.worker.mode", mode);
-    // Compute mode keeps DB autoconfig dormant by leaving itx.db.provider unset (the
-    // application.yml default is the empty string). Control mode opts in.
-    if ("control".equals(mode)) {
-      System.setProperty(
-          "itx.db.provider", System.getenv().getOrDefault("ITX_DB_PROVIDER", "postgres"));
-    }
 
-    SpringApplication.run(WorkerApplication.class, rest.toArray(new String[0]));
+    Class<?> modeConfig =
+        switch (mode) {
+          case "control" -> {
+            // Control mode opts the worker into a DB; compute leaves itx.db.provider unset
+            // so JPA autoconfig stays dormant.
+            System.setProperty(
+                "itx.db.provider", System.getenv().getOrDefault("ITX_DB_PROVIDER", "postgres"));
+            yield WorkerControlConfig.class;
+          }
+          case "compute" -> WorkerComputeConfig.class;
+          default -> throw new IllegalStateException("unknown --mode: " + mode);
+        };
+
+    new SpringApplicationBuilder(WorkerApplication.class, modeConfig)
+        .web(WebApplicationType.NONE)
+        .run(rest.toArray(new String[0]));
   }
 }

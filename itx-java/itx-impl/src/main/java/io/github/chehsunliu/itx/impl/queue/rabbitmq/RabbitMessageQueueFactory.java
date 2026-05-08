@@ -8,11 +8,7 @@ import io.github.chehsunliu.itx.contract.queue.QueueException;
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 
-@Component
-@ConditionalOnProperty(name = "itx.queue.provider", havingValue = "rabbitmq")
 public class RabbitMessageQueueFactory implements MessageQueueFactory {
 
   private final Connection connection;

@@ -4,13 +4,9 @@ import io.github.chehsunliu.itx.contract.queue.MessageQueue;
 import io.github.chehsunliu.itx.contract.queue.MessageQueueFactory;
 import jakarta.annotation.PreDestroy;
 import java.net.URI;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.SqsClientBuilder;
 
-@Component
-@ConditionalOnProperty(name = "itx.queue.provider", havingValue = "sqs")
 public class SqsMessageQueueFactory implements MessageQueueFactory {
 
   private final SqsClient client;

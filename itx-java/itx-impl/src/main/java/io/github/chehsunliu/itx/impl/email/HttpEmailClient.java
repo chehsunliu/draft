@@ -3,15 +3,11 @@ package io.github.chehsunliu.itx.impl.email;
 import io.github.chehsunliu.itx.contract.email.EmailClient;
 import io.github.chehsunliu.itx.contract.email.EmailException;
 import io.github.chehsunliu.itx.contract.email.SendEmailMessage;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
-@Component
-@ConditionalOnProperty(name = "itx.email.url")
 public class HttpEmailClient implements EmailClient {
 
   private final RestClient client;

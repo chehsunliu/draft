@@ -7,11 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"io.github.chehsunliu.itx.backend", "io.github.chehsunliu.itx.impl"})
 @ConfigurationPropertiesScan("io.github.chehsunliu.itx.impl")
 @EntityScan("io.github.chehsunliu.itx.impl.repo.entity")
 @EnableJpaRepositories("io.github.chehsunliu.itx.impl.repo.jpa")

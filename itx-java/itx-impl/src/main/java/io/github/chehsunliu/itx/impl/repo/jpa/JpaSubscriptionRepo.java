@@ -6,14 +6,10 @@ import io.github.chehsunliu.itx.impl.repo.entity.SubscriptionId;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
-@ConditionalOnExpression("!'${itx.db.provider:}'.isEmpty()")
 @RequiredArgsConstructor
-class JpaSubscriptionRepo implements SubscriptionRepo {
+public class JpaSubscriptionRepo implements SubscriptionRepo {
 
   private final SubscriptionJpaRepo subscriptionJpaRepo;
   private final IdempotentInserter inserter;

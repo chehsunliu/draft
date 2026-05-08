@@ -13,13 +13,9 @@ import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
-@Component
-@ConditionalOnProperty(name = "itx.worker.mode", havingValue = "control")
 @RequiredArgsConstructor
 public class ControlDispatcher implements MessageHandler {
 

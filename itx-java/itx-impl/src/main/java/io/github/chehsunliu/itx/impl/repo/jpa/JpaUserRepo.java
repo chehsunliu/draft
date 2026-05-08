@@ -6,14 +6,10 @@ import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import io.github.chehsunliu.itx.impl.repo.entity.UserEntity;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
-@ConditionalOnExpression("!'${itx.db.provider:}'.isEmpty()")
 @RequiredArgsConstructor
-class JpaUserRepo implements UserRepo {
+public class JpaUserRepo implements UserRepo {
 
   private final UserJpaRepo userJpaRepo;
   private final IdempotentInserter inserter;
