@@ -27,6 +27,12 @@
 2. `./gradlew check`
 3. `./gradlew :itx-backend:bootJar :itx-worker:bootJar`
 
+### `itx-kt`
+
+1. `./gradlew spotlessApply`
+2. `./gradlew spotlessCheck`
+3. `./gradlew :itx-backend:shadowJar :itx-worker:shadowJar`
+
 ### `./integration-tests/pytest`:
 
 1. Add tests to `./integration-tests/pytest/tests/` when adding features or fixing bugs.
