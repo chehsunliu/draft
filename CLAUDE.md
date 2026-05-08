@@ -21,6 +21,12 @@
 2. `go test ./...`
 3. `go build ./...`
 
+### `itx-java`
+
+1. `./gradlew spotlessApply`
+2. `./gradlew check`
+3. `make build` (produces `bin/itx-backend`, `bin/itx-control-worker`, `bin/itx-compute-worker`)
+
 ### `./integration-tests/pytest`:
 
 1. Add tests to `./integration-tests/pytest/tests/` when adding features or fixing bugs.

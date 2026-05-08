@@ -6,8 +6,8 @@ from typing import IO, Any, AnyStr
 RFC3339_RE = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"
 
 
-def wait_for_port(host: str, port: int):
-    timeout, interval = 5.0, 0.1
+def wait_for_port(host: str, port: int, timeout: float = 30.0):
+    interval = 0.1
     deadline = time.time() + timeout
     while time.time() < deadline:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:

@@ -32,6 +32,12 @@ artifact_profiles: dict[str, ArtifactProfile] = {
         backend_binary="bin/itx-backend",
         control_worker_binary="bin/itx-control-worker",
     ),
+    "java": ArtifactProfile(
+        cwd=repo_root / "itx-java",
+        build_cmd=["make", "build"],
+        backend_binary="bin/itx-backend",
+        control_worker_binary="bin/itx-control-worker",
+    ),
 }
 
 itx_lang = os.environ.get("ITX_LANG", "rust")

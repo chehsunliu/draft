@@ -133,3 +133,64 @@ jobs:
 
       - name: Shutdown containers
         run: docker compose down --remove-orphans -v --timeout 5 || true
+
+  java-integration-test:
+    name: java-integration-test (${{ matrix.profile }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: onprem
+            docker-init-services: mariadb-init
+          - profile: aws
+            docker-init-services: postgres-init
+    defaults:
+      run:
+        working-directory: integration-tests
+    env:
+      ITX_LANG: java
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: 3.14
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      - name: Check formatting
+        run: make check
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Check Java formatting
+        working-directory: itx-java
+        run: ./gradlew spotlessCheck
+
+      - name: Build binaries
+        working-directory: itx-java
+        run: make build
+
+      - name: Start containers
+        run: docker compose up -d
+
+      - name: Wait for init services
+        run: docker compose wait ${{ matrix.docker-init-services }}
+
+      - name: Run integration tests
+        timeout-minutes: 8
+        run: uv run pytest --durations=50
+        env:
+          ITX_TEST_PROFILE: ${{ matrix.profile }}
+
+      - name: Shutdown containers
+        run: docker compose down --remove-orphans -v --timeout 5 || true
