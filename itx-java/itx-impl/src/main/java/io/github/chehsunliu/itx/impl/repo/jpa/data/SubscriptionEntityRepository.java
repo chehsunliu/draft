@@ -1,4 +1,4 @@
-package io.github.chehsunliu.itx.impl.repo.jpa;
+package io.github.chehsunliu.itx.impl.repo.jpa.data;
 
 import io.github.chehsunliu.itx.impl.repo.entity.SubscriptionEntity;
 import io.github.chehsunliu.itx.impl.repo.entity.SubscriptionId;
@@ -9,7 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface SubscriptionJpaRepo extends JpaRepository<SubscriptionEntity, SubscriptionId> {
+public interface SubscriptionEntityRepository
+    extends JpaRepository<SubscriptionEntity, SubscriptionId> {
 
   @Query(
       "SELECT u FROM SubscriptionEntity s JOIN UserEntity u ON u.id = s.id.authorId "

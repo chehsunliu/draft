@@ -1,4 +1,4 @@
-package io.github.chehsunliu.itx.impl.repo.jpa;
+package io.github.chehsunliu.itx.impl.repo.jpa.data;
 
 import io.github.chehsunliu.itx.impl.repo.entity.PostEntity;
 import jakarta.persistence.LockModeType;
@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface PostJpaRepo extends JpaRepository<PostEntity, Long> {
+public interface PostEntityRepository extends JpaRepository<PostEntity, Long> {
 
   @EntityGraph(attributePaths = "tags")
   Optional<PostEntity> findById(Long id);

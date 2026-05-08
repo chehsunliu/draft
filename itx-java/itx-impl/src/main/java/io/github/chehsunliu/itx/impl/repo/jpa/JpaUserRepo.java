@@ -4,6 +4,7 @@ import io.github.chehsunliu.itx.contract.repo.RepoNotFoundException;
 import io.github.chehsunliu.itx.contract.repo.User;
 import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import io.github.chehsunliu.itx.impl.repo.entity.UserEntity;
+import io.github.chehsunliu.itx.impl.repo.jpa.data.UserEntityRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,14 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class JpaUserRepo implements UserRepo {
 
-  private final UserJpaRepo userJpaRepo;
+  private final UserEntityRepository userEntityRepo;
   private final IdempotentInserter inserter;
 
   @Override
   @Transactional
   public User upsert(UpsertParams params) {
     UserEntity entity =
-        userJpaRepo
+        userEntityRepo
             .findById(params.getId())
             .orElseGet(() -> inserter.insertUserIfAbsent(params.getId(), params.getEmail()));
     return toContract(entity);
@@ -27,7 +28,7 @@ public class JpaUserRepo implements UserRepo {
   @Override
   @Transactional(readOnly = true)
   public User get(UUID id) {
-    return userJpaRepo
+    return userEntityRepo
         .findById(id)
         .map(JpaUserRepo::toContract)
         .orElseThrow(RepoNotFoundException::new);

@@ -4,6 +4,9 @@ import io.github.chehsunliu.itx.impl.repo.entity.SubscriptionEntity;
 import io.github.chehsunliu.itx.impl.repo.entity.SubscriptionId;
 import io.github.chehsunliu.itx.impl.repo.entity.TagEntity;
 import io.github.chehsunliu.itx.impl.repo.entity.UserEntity;
+import io.github.chehsunliu.itx.impl.repo.jpa.data.SubscriptionEntityRepository;
+import io.github.chehsunliu.itx.impl.repo.jpa.data.TagEntityRepository;
+import io.github.chehsunliu.itx.impl.repo.jpa.data.UserEntityRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -18,9 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class IdempotentInserter {
 
-  private final UserJpaRepo userRepo;
-  private final TagJpaRepo tagRepo;
-  private final SubscriptionJpaRepo subscriptionRepo;
+  private final UserEntityRepository userRepo;
+  private final TagEntityRepository tagRepo;
+  private final SubscriptionEntityRepository subscriptionRepo;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public UserEntity insertUserIfAbsent(UUID id, String email) {
