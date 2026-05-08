@@ -32,6 +32,7 @@ class Post(Base):
     title: Mapped[str] = mapped_column(Text)
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     tags: Mapped[list[Tag]] = relationship(secondary=PostTag.__table__, order_by=Tag.name)
 
