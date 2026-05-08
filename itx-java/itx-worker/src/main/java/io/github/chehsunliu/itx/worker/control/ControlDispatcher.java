@@ -13,13 +13,9 @@ import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
-@Component
-@Profile("control")
 @RequiredArgsConstructor
 public class ControlDispatcher implements MessageHandler {
 

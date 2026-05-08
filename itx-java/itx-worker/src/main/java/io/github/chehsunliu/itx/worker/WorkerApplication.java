@@ -1,20 +1,25 @@
 package io.github.chehsunliu.itx.worker;
 
+import io.github.chehsunliu.itx.worker.compute.WorkerComputeConfig;
+import io.github.chehsunliu.itx.worker.control.WorkerControlConfig;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 
-@SpringBootApplication(
-    exclude = {
-      DataSourceAutoConfiguration.class,
-      DataSourceTransactionManagerAutoConfiguration.class,
-      JdbcTemplateAutoConfiguration.class,
-    })
+// Mode-specific configs are added explicitly by main() — exclude them from the default
+// component scan so the unwanted one isn't picked up.
+@SpringBootApplication
+@ComponentScan(
+    excludeFilters =
+        @ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = {WorkerControlConfig.class, WorkerComputeConfig.class}))
+@ConfigurationPropertiesScan("io.github.chehsunliu.itx.impl")
 public class WorkerApplication {
 
   public static void main(String[] args) {
@@ -33,11 +38,22 @@ public class WorkerApplication {
       }
     }
     System.setProperty("itx.worker.mode", mode);
-    System.setProperty("spring.profiles.active", mode);
 
-    new SpringApplicationBuilder(WorkerApplication.class)
+    Class<?> modeConfig =
+        switch (mode) {
+          case "control" -> {
+            // Control mode opts the worker into a DB; compute leaves itx.db.provider unset
+            // so JPA autoconfig stays dormant.
+            System.setProperty(
+                "itx.db.provider", System.getenv().getOrDefault("ITX_DB_PROVIDER", "postgres"));
+            yield WorkerControlConfig.class;
+          }
+          case "compute" -> WorkerComputeConfig.class;
+          default -> throw new IllegalStateException("unknown --mode: " + mode);
+        };
+
+    new SpringApplicationBuilder(WorkerApplication.class, modeConfig)
         .web(WebApplicationType.NONE)
-        .build()
         .run(rest.toArray(new String[0]));
   }
 }

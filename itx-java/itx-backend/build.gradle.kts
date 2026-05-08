@@ -10,7 +10,6 @@ dependencies {
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.validation)
-    implementation(libs.spring.boot.starter.jdbc)
 
     runtimeOnly(libs.postgres)
     runtimeOnly(libs.mariadb)

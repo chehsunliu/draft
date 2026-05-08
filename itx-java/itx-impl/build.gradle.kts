@@ -13,7 +13,7 @@ dependencies {
     api(project(":itx-contract"))
 
     api(libs.spring.boot.starter)
-    api(libs.spring.boot.starter.jdbc)
+    api(libs.spring.boot.starter.data.jpa)
 
     api(libs.aws.sqs)
     runtimeOnly(libs.aws.sso)

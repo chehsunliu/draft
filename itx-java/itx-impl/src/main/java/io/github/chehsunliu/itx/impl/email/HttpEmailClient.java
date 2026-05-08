@@ -14,23 +14,10 @@ public class HttpEmailClient implements EmailClient {
   private final String url;
   private final String apiKey;
 
-  public HttpEmailClient(String url, String apiKey) {
-    this.url = url;
-    this.apiKey = apiKey;
+  public HttpEmailClient(EmailProperties props) {
+    this.url = props.getUrl();
+    this.apiKey = props.getApiKey();
     this.client = RestClient.builder().build();
-  }
-
-  /** Build from {@code ITX_EMAIL_URL} and {@code ITX_EMAIL_API_KEY} env vars. */
-  public static HttpEmailClient fromEnv() {
-    return new HttpEmailClient(requireEnv("ITX_EMAIL_URL"), requireEnv("ITX_EMAIL_API_KEY"));
-  }
-
-  private static String requireEnv(String name) {
-    String v = System.getenv(name);
-    if (v == null || v.isBlank()) {
-      throw new IllegalStateException("missing env var: " + name);
-    }
-    return v;
   }
 
   @Override

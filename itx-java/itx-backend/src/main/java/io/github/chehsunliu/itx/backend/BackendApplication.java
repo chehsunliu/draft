@@ -4,10 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+@SpringBootApplication
+@ConfigurationPropertiesScan("io.github.chehsunliu.itx.impl")
+@EntityScan("io.github.chehsunliu.itx.impl.repo.entity")
+@EnableJpaRepositories("io.github.chehsunliu.itx.impl.repo.jpa")
 public class BackendApplication {
 
   public static void main(String[] args) {
