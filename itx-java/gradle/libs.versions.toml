@@ -8,7 +8,7 @@ lombokMapstructBinding = "0.2.0"
 awsSdk = "2.30.16"
 amqpClient = "5.25.0"
 mariadb = "3.5.8"
-postgres = "42.7.7"
+postgres = "42.7.11"
 spotless = "7.0.2"
 jacksonAnnotations = "2.18.2"
 
