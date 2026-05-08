@@ -5,6 +5,7 @@ import io.github.chehsunliu.itx.contract.repo.PostRepo;
 import io.github.chehsunliu.itx.contract.repo.RepoNotFoundException;
 import io.github.chehsunliu.itx.impl.repo.entity.PostEntity;
 import io.github.chehsunliu.itx.impl.repo.entity.TagEntity;
+import io.github.chehsunliu.itx.impl.repo.jpa.data.PostEntityRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.LinkedHashSet;
@@ -16,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class JpaPostRepo implements PostRepo {
 
-  private final PostJpaRepo postJpaRepo;
+  private final PostEntityRepository postEntityRepo;
   private final IdempotentInserter inserter;
 
   @PersistenceContext private EntityManager em;
@@ -41,7 +42,7 @@ public class JpaPostRepo implements PostRepo {
   @Override
   @Transactional(readOnly = true)
   public Post get(GetParams params) {
-    return postJpaRepo
+    return postEntityRepo
         .findById(params.getId())
         .map(JpaPostRepo::toContract)
         .orElseThrow(RepoNotFoundException::new);
@@ -56,14 +57,14 @@ public class JpaPostRepo implements PostRepo {
     entity.setTitle(params.getTitle());
     entity.setBody(params.getBody());
     entity.setTags(tags);
-    return toContract(postJpaRepo.save(entity));
+    return toContract(postEntityRepo.save(entity));
   }
 
   @Override
   @Transactional
   public Post update(UpdateParams params) {
     PostEntity entity =
-        postJpaRepo
+        postEntityRepo
             .findForUpdate(params.getId(), params.getAuthorId())
             .orElseThrow(RepoNotFoundException::new);
     if (params.getTitle() != null) entity.setTitle(params.getTitle());
@@ -77,7 +78,7 @@ public class JpaPostRepo implements PostRepo {
   @Override
   @Transactional
   public void delete(DeleteParams params) {
-    int rows = postJpaRepo.deleteByIdAndAuthorId(params.getId(), params.getAuthorId());
+    int rows = postEntityRepo.deleteByIdAndAuthorId(params.getId(), params.getAuthorId());
     if (rows == 0) {
       throw new RepoNotFoundException();
     }

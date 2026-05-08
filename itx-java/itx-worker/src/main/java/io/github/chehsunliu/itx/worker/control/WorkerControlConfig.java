@@ -19,10 +19,10 @@ import io.github.chehsunliu.itx.impl.repo.jpa.IdempotentInserter;
 import io.github.chehsunliu.itx.impl.repo.jpa.JpaPostRepo;
 import io.github.chehsunliu.itx.impl.repo.jpa.JpaSubscriptionRepo;
 import io.github.chehsunliu.itx.impl.repo.jpa.JpaUserRepo;
-import io.github.chehsunliu.itx.impl.repo.jpa.PostJpaRepo;
-import io.github.chehsunliu.itx.impl.repo.jpa.SubscriptionJpaRepo;
-import io.github.chehsunliu.itx.impl.repo.jpa.TagJpaRepo;
-import io.github.chehsunliu.itx.impl.repo.jpa.UserJpaRepo;
+import io.github.chehsunliu.itx.impl.repo.jpa.data.PostEntityRepository;
+import io.github.chehsunliu.itx.impl.repo.jpa.data.SubscriptionEntityRepository;
+import io.github.chehsunliu.itx.impl.repo.jpa.data.TagEntityRepository;
+import io.github.chehsunliu.itx.impl.repo.jpa.data.UserEntityRepository;
 import io.github.chehsunliu.itx.impl.repo.mariadb.MariadbProperties;
 import io.github.chehsunliu.itx.impl.repo.postgres.PostgresProperties;
 import io.github.chehsunliu.itx.worker.run.QueueRunner;
@@ -37,7 +37,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import tools.jackson.databind.ObjectMapper;
 
 @Configuration
-@EnableJpaRepositories("io.github.chehsunliu.itx.impl.repo.jpa")
+@EnableJpaRepositories("io.github.chehsunliu.itx.impl.repo.jpa.data")
 @EntityScan("io.github.chehsunliu.itx.impl.repo.entity")
 @RequiredArgsConstructor
 public class WorkerControlConfig {
@@ -109,24 +109,26 @@ public class WorkerControlConfig {
 
   @Bean
   IdempotentInserter idempotentInserter(
-      UserJpaRepo userJpaRepo, TagJpaRepo tagJpaRepo, SubscriptionJpaRepo subscriptionJpaRepo) {
-    return new IdempotentInserter(userJpaRepo, tagJpaRepo, subscriptionJpaRepo);
+      UserEntityRepository userEntityRepo,
+      TagEntityRepository tagEntityRepo,
+      SubscriptionEntityRepository subscriptionEntityRepo) {
+    return new IdempotentInserter(userEntityRepo, tagEntityRepo, subscriptionEntityRepo);
   }
 
   @Bean
-  PostRepo postRepo(PostJpaRepo postJpaRepo, IdempotentInserter inserter) {
-    return new JpaPostRepo(postJpaRepo, inserter);
+  PostRepo postRepo(PostEntityRepository postEntityRepo, IdempotentInserter inserter) {
+    return new JpaPostRepo(postEntityRepo, inserter);
   }
 
   @Bean
-  UserRepo userRepo(UserJpaRepo userJpaRepo, IdempotentInserter inserter) {
-    return new JpaUserRepo(userJpaRepo, inserter);
+  UserRepo userRepo(UserEntityRepository userEntityRepo, IdempotentInserter inserter) {
+    return new JpaUserRepo(userEntityRepo, inserter);
   }
 
   @Bean
   SubscriptionRepo subscriptionRepo(
-      SubscriptionJpaRepo subscriptionJpaRepo, IdempotentInserter inserter) {
-    return new JpaSubscriptionRepo(subscriptionJpaRepo, inserter);
+      SubscriptionEntityRepository subscriptionEntityRepo, IdempotentInserter inserter) {
+    return new JpaSubscriptionRepo(subscriptionEntityRepo, inserter);
   }
 
   @Bean
