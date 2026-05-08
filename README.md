@@ -4,7 +4,7 @@
 
 A demonstration project for performing integration testing on multi-module backend systems using **Pytest** as the test runner.
 
-The project is designed to support multiple backend languages behind a shared API spec. For now, the implementations are **Go (Gin)**, **Rust (Axum)**, and **Kotlin (Ktor)**; more may be added later.
+The project is designed to support multiple backend languages behind a shared API spec. For now, the implementations are **Go (Gin)**, **Rust (Axum)**, **Kotlin (Ktor)**, and **Java (Javalin)**; more may be added later.
 
 ## Goals
 
@@ -15,14 +15,14 @@ The project is designed to support multiple backend languages behind a shared AP
 
 ## Development
 
-The pytest integration suite picks which backend to build and run via the `ITX_LANG` env var (`rust` by default, or `golang` or `kotlin`). The fixtures handle building the binary and starting/stopping the server — you don't need to run anything in `itx-rs/`, `itx-go/`, or `itx-kt/` yourself.
+The pytest integration suite picks which backend to build and run via the `ITX_LANG` env var (`rust` by default, or `golang`, `kotlin`, or `java`). The fixtures handle building the binary and starting/stopping the server — you don't need to run anything in `itx-rs/`, `itx-go/`, `itx-kt/`, or `itx-java/` yourself.
 
 Prerequisites:
 
 - Python 3.14 + [`uv`](https://docs.astral.sh/uv/)
 - Rust toolchain (stable) — for `ITX_LANG=rust`
 - Go (version in `itx-go/itx-backend/go.mod`) — for `ITX_LANG=golang`
-- JDK 25 + GNU make — for `ITX_LANG=kotlin` (the Gradle wrapper handles the rest)
+- JDK 25 + GNU make — for `ITX_LANG=kotlin` or `ITX_LANG=java` (the Gradle wrapper handles the rest)
 
 One-time setup:
 
@@ -49,6 +49,12 @@ Run the same suite against the kotlin backend:
 
 ```sh
 ITX_LANG=kotlin make test
+```
+
+Run the same suite against the java backend:
+
+```sh
+ITX_LANG=java make test
 ```
 
 ### Switching the infra profile

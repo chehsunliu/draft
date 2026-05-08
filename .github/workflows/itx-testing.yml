@@ -14,6 +14,7 @@ jobs:
       rs-src: ${{ steps.filter.outputs.rs-src }}
       go-src: ${{ steps.filter.outputs.go-src }}
       kt-src: ${{ steps.filter.outputs.kt-src }}
+      ja-src: ${{ steps.filter.outputs.ja-src }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -35,6 +36,12 @@ jobs:
               - '.github/workflows/itx-testing.yml'
             kt-src:
               - 'itx-kt/**'
+              - 'integration-tests/**'
+              - 'storage/**'
+              - 'openapi.yaml'
+              - '.github/workflows/itx-testing.yml'
+            ja-src:
+              - 'itx-java/**'
               - 'integration-tests/**'
               - 'storage/**'
               - 'openapi.yaml'
@@ -246,4 +253,72 @@ jobs:
 
       - name: Shutdown containers
         if: needs.changes.outputs.kt-src == 'true'
+        run: docker compose down --remove-orphans -v --timeout 5 || true
+
+  java-integration-test:
+    name: java-integration-test (${{ matrix.profile }})
+    needs: changes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: onprem
+            docker-init-services: mariadb-init
+          - profile: aws
+            docker-init-services: postgres-init
+    defaults:
+      run:
+        working-directory: integration-tests
+    env:
+      ITX_LANG: java
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: 3.14
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      - name: Check formatting
+        run: make check
+
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6
+
+      - name: Check Java formatting
+        if: needs.changes.outputs.ja-src == 'true'
+        working-directory: itx-java
+        run: ./gradlew spotlessCheck
+
+      - name: Build binaries
+        if: needs.changes.outputs.ja-src == 'true'
+        working-directory: itx-java
+        run: ./gradlew :itx-backend:shadowJar :itx-worker:shadowJar
+
+      - name: Start containers
+        if: needs.changes.outputs.ja-src == 'true'
+        run: docker compose up -d
+
+      - name: Wait for init services
+        if: needs.changes.outputs.ja-src == 'true'
+        run: docker compose wait ${{ matrix.docker-init-services }}
+
+      - name: Run integration tests
+        if: needs.changes.outputs.ja-src == 'true'
+        timeout-minutes: 8
+        run: uv run pytest --durations=50
+        env:
+          ITX_TEST_PROFILE: ${{ matrix.profile }}
+
+      - name: Shutdown containers
+        if: needs.changes.outputs.ja-src == 'true'
         run: docker compose down --remove-orphans -v --timeout 5 || true
