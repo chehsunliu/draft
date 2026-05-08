@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: itx-worker
+  main:
+    banner-mode: "off"
+    web-application-type: none
+
+logging:
+  structured:
+    format:
+      console: logstash
+  level:
+    root: INFO

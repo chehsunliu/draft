@@ -1,0 +1,25 @@
+# Gradle
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.project
+.classpath
+.settings/
+bin/
+!gradle/wrapper/
+
+# OS
+.DS_Store
+
+# Build outputs / wrappers we generate at build time
+out/
+target/

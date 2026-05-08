@@ -1,0 +1,39 @@
+[versions]
+java = "25"
+springBoot = "4.0.0"
+springDependencyManagement = "1.1.7"
+lombok = "1.18.46"
+mapstruct = "1.6.3"
+lombokMapstructBinding = "0.2.0"
+awsSdk = "2.30.16"
+amqpClient = "5.25.0"
+mariadb = "3.5.7"
+postgres = "42.7.7"
+spotless = "7.0.2"
+jacksonAnnotations = "2.18.2"
+
+[libraries]
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "springBoot" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "springBoot" }
+spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc", version.ref = "springBoot" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "springBoot" }
+
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+lombok-mapstruct-binding = { module = "org.projectlombok:lombok-mapstruct-binding", version.ref = "lombokMapstructBinding" }
+
+aws-sqs = { module = "software.amazon.awssdk:sqs", version.ref = "awsSdk" }
+aws-sso = { module = "software.amazon.awssdk:sso", version.ref = "awsSdk" }
+
+amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "amqpClient" }
+
+postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
+mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
+
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jacksonAnnotations" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

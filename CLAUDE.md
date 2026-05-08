@@ -21,6 +21,12 @@
 2. `go test ./...`
 3. `go build ./...`
 
+### `itx-java`
+
+1. `./gradlew spotlessApply`
+2. `./gradlew check`
+3. `./gradlew :itx-backend:bootJar :itx-worker:bootJar`
+
 ### `./integration-tests/pytest`:
 
 1. Add tests to `./integration-tests/pytest/tests/` when adding features or fixing bugs.

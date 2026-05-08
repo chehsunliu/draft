@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: itx-backend
+  main:
+    banner-mode: "off"
+  mvc:
+    throw-exception-if-no-handler-found: true
+    servlet:
+      # Initialize the dispatcher at startup so its init logs don't bleed into
+      # the first request — the integration tests assert zero log lines per
+      # successful request.
+      load-on-startup: 1
+  web:
+    resources:
+      add-mappings: false
+
+server:
+  shutdown: graceful
+
+logging:
+  structured:
+    format:
+      console: logstash
+  level:
+    root: INFO

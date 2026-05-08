@@ -23,14 +23,25 @@ artifact_profiles: dict[str, ArtifactProfile] = {
     "rust": ArtifactProfile(
         cwd=repo_root / "itx-rs",
         build_cmd=["cargo", "build"],
-        backend_binary="target/debug/itx-backend",
-        control_worker_binary="target/debug/itx-control-worker",
+        backend_cmd=["target/debug/itx-backend"],
+        control_worker_cmd=["target/debug/itx-control-worker"],
     ),
     "golang": ArtifactProfile(
         cwd=repo_root / "itx-go",
         build_cmd=["make", "build"],
-        backend_binary="bin/itx-backend",
-        control_worker_binary="bin/itx-control-worker",
+        backend_cmd=["bin/itx-backend"],
+        control_worker_cmd=["bin/itx-control-worker"],
+    ),
+    "java": ArtifactProfile(
+        cwd=repo_root / "itx-java",
+        build_cmd=["./gradlew", ":itx-backend:bootJar", ":itx-worker:bootJar"],
+        backend_cmd=["java", "-jar", "itx-backend/build/libs/itx-backend.jar"],
+        control_worker_cmd=[
+            "java",
+            "-jar",
+            "itx-worker/build/libs/itx-worker.jar",
+            "--mode=control",
+        ],
     ),
 }
 
