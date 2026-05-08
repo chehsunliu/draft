@@ -61,3 +61,19 @@ ITX_TEST_PROFILE=onprem make test  # mariadb
 ```
 
 A profile bundles a set of infra choices (database, and later queue/cache/etc.) into a single switch. The profile names — `aws`, `onprem` — are just labels for the bundles used in this demo; they don't constrain what you can run where (you can absolutely deploy mariadb on AWS in real life). They're packaged this way because flipping every piece (`ITX_DB_PROVIDER`, `ITX_*_HOST`, …) one by one would be tedious.
+
+### Running multiple checkouts in parallel
+
+The `integration-tests/docker-compose.yml` deliberately publishes every service on a **random host port** (`127.0.0.1:0:<container-port>`) instead of a fixed one. This is intentional: it lets you bring up multiple independent stacks side by side — for example, one per `git worktree`, or a second `git clone` for another Claude Code session — without host-port collisions.
+
+To keep the stacks fully isolated (separate containers, networks, and volumes), set `COMPOSE_PROJECT_NAME` to a unique value per checkout:
+
+```sh
+# in checkout A
+COMPOSE_PROJECT_NAME=itx-a docker compose -f integration-tests/docker-compose.yml up -d
+
+# in checkout B (different worktree / clone)
+COMPOSE_PROJECT_NAME=itx-b docker compose -f integration-tests/docker-compose.yml up -d
+```
+
+The pytest fixtures discover the dynamic ports at runtime, so each session talks to its own stack as long as `COMPOSE_PROJECT_NAME` is exported in that shell.
