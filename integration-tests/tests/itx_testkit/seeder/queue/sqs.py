@@ -5,6 +5,28 @@ import aioboto3
 
 from itx_testkit.seeder.queue.base import QUEUE_KEYS, QueueReader, QueueSeeder
 
+# Attributes accepted by SQS CreateQueue. get_queue_attributes returns extra
+# read-only fields (ApproximateNumberOfMessages, CreatedTimestamp, QueueArn, ...)
+# that must be filtered out before recreating.
+_CREATABLE_ATTRS = frozenset(
+    {
+        "DelaySeconds",
+        "MaximumMessageSize",
+        "MessageRetentionPeriod",
+        "Policy",
+        "ReceiveMessageWaitTimeSeconds",
+        "RedrivePolicy",
+        "VisibilityTimeout",
+        "KmsMasterKeyId",
+        "KmsDataKeyReusePeriodSeconds",
+        "SqsManagedSseEnabled",
+        "FifoQueue",
+        "ContentBasedDeduplication",
+        "DeduplicationScope",
+        "FifoThroughputLimit",
+    }
+)
+
 
 class SqsQueueReader(QueueReader):
     def __init__(self, client, queue_url: str):
@@ -34,6 +56,7 @@ class SqsQueueSeeder(QueueSeeder):
         self._session = aioboto3.Session()
         self._client_ctx = None
         self._client = None
+        self._queue_attrs: dict[str, dict[str, str]] = {}
 
     async def __aenter__(self) -> "SqsQueueSeeder":
         if self._client is None:
@@ -45,7 +68,11 @@ class SqsQueueSeeder(QueueSeeder):
                 aws_secret_access_key="x",
             )
             self._client_ctx = client_ctx
-            self._client = await client_ctx.__aenter__()
+            client = await client_ctx.__aenter__()
+            self._client = client
+            for url in self._queue_urls.values():
+                resp = await client.get_queue_attributes(QueueUrl=url, AttributeNames=["All"])
+                self._queue_attrs[url] = {k: v for k, v in resp.get("Attributes", {}).items() if k in _CREATABLE_ATTRS}
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -59,13 +86,14 @@ class SqsQueueSeeder(QueueSeeder):
             self._client = None
 
     async def reset(self) -> None:
+        # purge_queue is not immediate in ElasticMQ/SQS — leftover messages can
+        # leak into the next test. Delete and recreate each queue with the
+        # attributes captured at __aenter__ time.
         assert self._client is not None
-        for url in self._queue_urls.values():
-            # ElasticMQ supports purge_queue; ignore "queue empty" errors gracefully.
-            try:
-                await self._client.purge_queue(QueueUrl=url)
-            except Exception:
-                pass
+        for url, attrs in self._queue_attrs.items():
+            name = url.rsplit("/", 1)[-1]
+            await self._client.delete_queue(QueueUrl=url)
+            await self._client.create_queue(QueueName=name, Attributes=attrs)
 
     def reader(self, queue_key: str) -> QueueReader:
         if queue_key not in QUEUE_KEYS:
