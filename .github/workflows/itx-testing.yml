@@ -8,8 +8,41 @@ on:
   workflow_dispatch:
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      rs-src: ${{ steps.filter.outputs.rs-src }}
+      go-src: ${{ steps.filter.outputs.go-src }}
+      kt-src: ${{ steps.filter.outputs.kt-src }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            rs-src:
+              - 'itx-rs/**'
+              - 'integration-tests/**'
+              - 'storage/**'
+              - 'openapi.yaml'
+              - '.github/workflows/itx-testing.yml'
+            go-src:
+              - 'itx-go/**'
+              - 'integration-tests/**'
+              - 'storage/**'
+              - 'openapi.yaml'
+              - '.github/workflows/itx-testing.yml'
+            kt-src:
+              - 'itx-kt/**'
+              - 'integration-tests/**'
+              - 'storage/**'
+              - 'openapi.yaml'
+              - '.github/workflows/itx-testing.yml'
+
   rust-integration-test:
     name: rust-integration-test (${{ matrix.profile }})
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -47,30 +80,37 @@ jobs:
           echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
 
       - name: Check Rust formatting
+        if: needs.changes.outputs.rs-src == 'true'
         working-directory: itx-rs
         run: cargo fmt --all -- --check
 
       - name: Build binaries
+        if: needs.changes.outputs.rs-src == 'true'
         working-directory: itx-rs
         run: cargo build
 
       - name: Start containers
+        if: needs.changes.outputs.rs-src == 'true'
         run: docker compose up -d
 
       - name: Wait for init services
+        if: needs.changes.outputs.rs-src == 'true'
         run: docker compose wait ${{ matrix.docker-init-services }}
 
       - name: Run integration tests
+        if: needs.changes.outputs.rs-src == 'true'
         timeout-minutes: 5
         run: uv run pytest --durations=50
         env:
           ITX_TEST_PROFILE: ${{ matrix.profile }}
 
       - name: Shutdown containers
+        if: needs.changes.outputs.rs-src == 'true'
         run: docker compose down --remove-orphans -v --timeout 5 || true
 
   golang-integration-test:
     name: golang-integration-test (${{ matrix.profile }})
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -106,6 +146,7 @@ jobs:
           cache-dependency-path: itx-go/itx-backend/go.sum
 
       - name: Check Go formatting
+        if: needs.changes.outputs.go-src == 'true'
         working-directory: itx-go
         run: |
           unformatted=$(gofmt -l .)
@@ -116,26 +157,32 @@ jobs:
           fi
 
       - name: Build binaries
+        if: needs.changes.outputs.go-src == 'true'
         working-directory: itx-go
         run: make build
 
       - name: Start containers
+        if: needs.changes.outputs.go-src == 'true'
         run: docker compose up -d
 
       - name: Wait for init services
+        if: needs.changes.outputs.go-src == 'true'
         run: docker compose wait ${{ matrix.docker-init-services }}
 
       - name: Run integration tests
+        if: needs.changes.outputs.go-src == 'true'
         timeout-minutes: 5
         run: uv run pytest --durations=50
         env:
           ITX_TEST_PROFILE: ${{ matrix.profile }}
 
       - name: Shutdown containers
+        if: needs.changes.outputs.go-src == 'true'
         run: docker compose down --remove-orphans -v --timeout 5 || true
 
   kotlin-integration-test:
     name: kotlin-integration-test (${{ matrix.profile }})
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -173,24 +220,30 @@ jobs:
       - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6
 
       - name: Check Kotlin formatting
+        if: needs.changes.outputs.kt-src == 'true'
         working-directory: itx-kt
         run: ./gradlew spotlessCheck
 
       - name: Build binaries
+        if: needs.changes.outputs.kt-src == 'true'
         working-directory: itx-kt
         run: ./gradlew :itx-backend:shadowJar :itx-worker:shadowJar
 
       - name: Start containers
+        if: needs.changes.outputs.kt-src == 'true'
         run: docker compose up -d
 
       - name: Wait for init services
+        if: needs.changes.outputs.kt-src == 'true'
         run: docker compose wait ${{ matrix.docker-init-services }}
 
       - name: Run integration tests
+        if: needs.changes.outputs.kt-src == 'true'
         timeout-minutes: 8
         run: uv run pytest --durations=50
         env:
           ITX_TEST_PROFILE: ${{ matrix.profile }}
 
       - name: Shutdown containers
+        if: needs.changes.outputs.kt-src == 'true'
         run: docker compose down --remove-orphans -v --timeout 5 || true
