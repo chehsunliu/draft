@@ -9,7 +9,7 @@ awsSdk = "2.44.4"
 amqpClient = "5.30.0"
 mariadb = "3.5.8"
 postgres = "42.7.11"
-spotless = "7.2.1"
+spotless = "8.4.0"
 jacksonAnnotations = "2.21"
 
 [libraries]
