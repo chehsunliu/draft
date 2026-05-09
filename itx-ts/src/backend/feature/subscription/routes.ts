@@ -1,9 +1,14 @@
 import { Router } from "express";
+import { z } from "zod";
 import { ItxRequest, requireUser } from "../../context.js";
-import { asyncHandler, notFound, pathParam } from "../../http.js";
+import { asyncHandler, notFound } from "../../http.js";
 import { AppState } from "../../state.js";
 import { SubscribeUseCase } from "./use_case/subscribe.js";
 import { UnsubscribeUseCase } from "./use_case/unsubscribe.js";
+
+const subscriptionParamsSchema = z.object({
+  author_id: z.string().min(1),
+});
 
 export function createRouter(state: AppState): Router {
   const router = Router();
@@ -12,7 +17,9 @@ export function createRouter(state: AppState): Router {
     "/:author_id",
     requireUser,
     asyncHandler(async (req, res) => {
-      const authorId = pathParam(req, "author_id");
+      const { author_id: authorId } = subscriptionParamsSchema.parse(
+        req.params,
+      );
       const itx = (req as ItxRequest).itx;
       if (itx.userId === authorId) {
         res
@@ -47,7 +54,9 @@ export function createRouter(state: AppState): Router {
     "/:author_id",
     requireUser,
     asyncHandler(async (req, res) => {
-      const authorId = pathParam(req, "author_id");
+      const { author_id: authorId } = subscriptionParamsSchema.parse(
+        req.params,
+      );
       const itx = (req as ItxRequest).itx;
       if (itx.userId === authorId) {
         res

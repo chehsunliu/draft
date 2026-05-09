@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { ItxRequest, requireUser } from "../../context.js";
-import { asyncHandler, notFound, parsePostId } from "../../http.js";
+import { asyncHandler, notFound } from "../../http.js";
 import { AppState } from "../../state.js";
 import { CreatePostUseCase } from "./use_case/create_post.js";
 import { DeletePostUseCase } from "./use_case/delete_post.js";
@@ -12,6 +12,10 @@ import { UpdatePostUseCase } from "./use_case/update_post.js";
 const listPostsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().catch(50),
   offset: z.coerce.number().int().nonnegative().catch(0),
+});
+
+const postParamsSchema = z.object({
+  id: z.coerce.number().int(),
 });
 
 const createPostBodySchema = z.object({
@@ -69,10 +73,7 @@ export function createRouter(state: AppState): Router {
     "/:id",
     requireUser,
     asyncHandler(async (req, res) => {
-      const id = parsePostId(req, res);
-      if (id == null) {
-        return;
-      }
+      const { id } = postParamsSchema.parse(req.params);
       const itx = (req as ItxRequest).itx;
       const useCase = new GetPostUseCase(state.postRepo);
       const output = await useCase.execute({ id, userId: itx.userId! });
@@ -88,10 +89,7 @@ export function createRouter(state: AppState): Router {
     "/:id",
     requireUser,
     asyncHandler(async (req, res) => {
-      const id = parsePostId(req, res);
-      if (id == null) {
-        return;
-      }
+      const { id } = postParamsSchema.parse(req.params);
       const itx = (req as ItxRequest).itx;
       const body = updatePostBodySchema.parse(req.body ?? {});
       const useCase = new UpdatePostUseCase(state.postRepo);
@@ -114,10 +112,7 @@ export function createRouter(state: AppState): Router {
     "/:id",
     requireUser,
     asyncHandler(async (req, res) => {
-      const id = parsePostId(req, res);
-      if (id == null) {
-        return;
-      }
+      const { id } = postParamsSchema.parse(req.params);
       const itx = (req as ItxRequest).itx;
       const useCase = new DeletePostUseCase(state.postRepo);
       const deleted = await useCase.execute({ id, userId: itx.userId! });

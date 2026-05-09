@@ -1,9 +1,14 @@
 import { Router } from "express";
+import { z } from "zod";
 import { ItxRequest, requireUser } from "../../context.js";
-import { asyncHandler, notFound, pathParam } from "../../http.js";
+import { asyncHandler, notFound } from "../../http.js";
 import { AppState } from "../../state.js";
 import { GetMeUseCase } from "./use_case/get_me.js";
 import { ListSubscriptionsUseCase } from "./use_case/list_subscriptions.js";
+
+const userParamsSchema = z.object({
+  id: z.string().min(1),
+});
 
 export function createRouter(state: AppState): Router {
   const router = Router();
@@ -32,11 +37,7 @@ export function createRouter(state: AppState): Router {
     "/:id/subscriptions",
     requireUser,
     asyncHandler(async (req, res) => {
-      const id = pathParam(req, "id");
-      if (!id) {
-        res.status(400).json({ error: { message: "invalid user id" } });
-        return;
-      }
+      const { id } = userParamsSchema.parse(req.params);
       const useCase = new ListSubscriptionsUseCase(
         state.userRepo,
         state.subscriptionRepo,
