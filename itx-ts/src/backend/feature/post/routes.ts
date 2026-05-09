@@ -1,12 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { ItxRequest, requireUser } from "../../context.js";
-import {
-  asyncHandler,
-  notFound,
-  parsePostId,
-  parseRequest,
-} from "../../http.js";
+import { asyncHandler, notFound, parsePostId } from "../../http.js";
 import { AppState } from "../../state.js";
 import { CreatePostUseCase } from "./use_case/create_post.js";
 import { DeletePostUseCase } from "./use_case/delete_post.js";
@@ -39,7 +34,7 @@ export function createRouter(state: AppState): Router {
     requireUser,
     asyncHandler(async (req, res) => {
       const itx = (req as ItxRequest).itx;
-      const query = parseRequest(listPostsQuerySchema, req.query);
+      const query = listPostsQuerySchema.parse(req.query);
       const useCase = new ListPostsUseCase(state.postRepo);
       const output = await useCase.execute({
         userId: itx.userId!,
@@ -55,7 +50,7 @@ export function createRouter(state: AppState): Router {
     requireUser,
     asyncHandler(async (req, res) => {
       const itx = (req as ItxRequest).itx;
-      const body = parseRequest(createPostBodySchema, req.body ?? {});
+      const body = createPostBodySchema.parse(req.body ?? {});
       const useCase = new CreatePostUseCase(
         state.postRepo,
         state.controlStandardQueue,
@@ -98,7 +93,7 @@ export function createRouter(state: AppState): Router {
         return;
       }
       const itx = (req as ItxRequest).itx;
-      const body = parseRequest(updatePostBodySchema, req.body ?? {});
+      const body = updatePostBodySchema.parse(req.body ?? {});
       const useCase = new UpdatePostUseCase(state.postRepo);
       const output = await useCase.execute({
         id,
