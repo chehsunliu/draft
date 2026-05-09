@@ -32,36 +32,15 @@ cd integration-tests
 uv sync
 ```
 
-Run the suite against the rust backend (default):
+Run the suite against any supported backend:
 
 ```sh
-make test
-# or, explicitly:
-ITX_LANG=rust make test
-```
-
-Run the same suite against the go backend:
-
-```sh
-ITX_LANG=golang make test
-```
-
-Run the same suite against the kotlin backend:
-
-```sh
-ITX_LANG=kotlin make test
-```
-
-Run the same suite against the java backend:
-
-```sh
-ITX_LANG=java make test
-```
-
-Run the same suite against the TypeScript backend:
-
-```sh
-ITX_LANG=typescript make test
+make test                     # rust backend (default)
+ITX_LANG=rust make test       # rust backend
+ITX_LANG=golang make test     # go backend
+ITX_LANG=kotlin make test     # kotlin backend
+ITX_LANG=java make test       # java backend
+ITX_LANG=typescript make test # TypeScript backend
 ```
 
 ### Switching the infra profile
