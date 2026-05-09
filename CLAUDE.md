@@ -21,18 +21,6 @@
 2. `go test ./...`
 3. `go build ./...`
 
-### `itx-kt`
-
-1. `./gradlew spotlessApply`
-2. `./gradlew spotlessCheck`
-3. `./gradlew :itx-backend:shadowJar :itx-worker:shadowJar`
-
-### `itx-java`
-
-1. `./gradlew spotlessApply`
-2. `./gradlew spotlessCheck`
-3. `./gradlew :itx-backend:shadowJar :itx-worker:shadowJar`
-
 ### `./integration-tests/pytest`:
 
 1. Add tests to `./integration-tests/pytest/tests/` when adding features or fixing bugs.

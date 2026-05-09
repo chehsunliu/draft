@@ -32,28 +32,6 @@ artifact_profiles: dict[str, ArtifactProfile] = {
         backend_cmd=["bin/itx-backend"],
         control_worker_cmd=["bin/itx-control-worker"],
     ),
-    "kotlin": ArtifactProfile(
-        cwd=repo_root / "itx-kt",
-        build_cmd=["./gradlew", ":itx-backend:shadowJar", ":itx-worker:shadowJar"],
-        backend_cmd=["java", "-jar", "itx-backend/build/libs/itx-backend.jar"],
-        control_worker_cmd=[
-            "java",
-            "-jar",
-            "itx-worker/build/libs/itx-worker.jar",
-            "--mode=control",
-        ],
-    ),
-    "java": ArtifactProfile(
-        cwd=repo_root / "itx-java",
-        build_cmd=["./gradlew", ":itx-backend:shadowJar", ":itx-worker:shadowJar"],
-        backend_cmd=["java", "-jar", "itx-backend/build/libs/itx-backend.jar"],
-        control_worker_cmd=[
-            "java",
-            "-jar",
-            "itx-worker/build/libs/itx-worker.jar",
-            "--mode=control",
-        ],
-    ),
 }
 
 itx_lang = os.environ.get("ITX_LANG", "rust")
