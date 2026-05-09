@@ -5,6 +5,7 @@ import * as post from "./feature/post/routes.js";
 import * as subscription from "./feature/subscription/routes.js";
 import * as user from "./feature/user/routes.js";
 import { AppState } from "./state.js";
+import { NotFoundError } from "../types.js";
 import { ZodError } from "zod";
 
 export function createApp(state: AppState): express.Express {
@@ -30,6 +31,10 @@ export function createApp(state: AppState): express.Express {
           message: err.issues[0]?.message ?? "invalid request",
         },
       });
+      return;
+    }
+    if (err instanceof NotFoundError) {
+      res.status(404).json({ error: { message: err.message } });
       return;
     }
     console.error(err);

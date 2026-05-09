@@ -15,7 +15,3 @@ export function asyncHandler(handler: AsyncHandler): AsyncHandler {
     }
   };
 }
-
-export function notFound(res: Response): void {
-  res.status(404).json({ error: { message: "not found" } });
-}

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { ItxRequest, requireUser } from "../../context.js";
-import { asyncHandler, notFound } from "../../http.js";
+import { asyncHandler } from "../../http.js";
 import { AppState } from "../../state.js";
 import { CreatePostUseCase } from "./use_case/create_post.js";
 import { DeletePostUseCase } from "./use_case/delete_post.js";
@@ -77,10 +77,6 @@ export function createRouter(state: AppState): Router {
       const itx = (req as ItxRequest).itx;
       const useCase = new GetPostUseCase(state.postRepo);
       const output = await useCase.execute({ id, userId: itx.userId! });
-      if (!output) {
-        notFound(res);
-        return;
-      }
       res.json({ data: output });
     }),
   );
@@ -100,10 +96,6 @@ export function createRouter(state: AppState): Router {
         body: body.body,
         tags: body.tags,
       });
-      if (!output) {
-        notFound(res);
-        return;
-      }
       res.json({ data: output });
     }),
   );
@@ -115,11 +107,7 @@ export function createRouter(state: AppState): Router {
       const { id } = postParamsSchema.parse(req.params);
       const itx = (req as ItxRequest).itx;
       const useCase = new DeletePostUseCase(state.postRepo);
-      const deleted = await useCase.execute({ id, userId: itx.userId! });
-      if (!deleted) {
-        notFound(res);
-        return;
-      }
+      await useCase.execute({ id, userId: itx.userId! });
       res.status(204).end();
     }),
   );

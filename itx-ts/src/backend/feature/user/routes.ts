@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { ItxRequest, requireUser } from "../../context.js";
-import { asyncHandler, notFound } from "../../http.js";
+import { asyncHandler } from "../../http.js";
 import { AppState } from "../../state.js";
 import { GetMeUseCase } from "./use_case/get_me.js";
 import { ListSubscriptionsUseCase } from "./use_case/list_subscriptions.js";
@@ -43,10 +43,6 @@ export function createRouter(state: AppState): Router {
         state.subscriptionRepo,
       );
       const output = await useCase.execute({ subscriberId: id });
-      if (!output) {
-        notFound(res);
-        return;
-      }
       res.json({ data: output });
     }),
   );

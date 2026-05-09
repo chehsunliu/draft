@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { ItxRequest, requireUser } from "../../context.js";
-import { asyncHandler, notFound } from "../../http.js";
+import { asyncHandler } from "../../http.js";
 import { AppState } from "../../state.js";
 import { SubscribeUseCase } from "./use_case/subscribe.js";
 import { UnsubscribeUseCase } from "./use_case/unsubscribe.js";
@@ -37,15 +37,11 @@ export function createRouter(state: AppState): Router {
         state.userRepo,
         state.subscriptionRepo,
       );
-      const subscribed = await useCase.execute({
+      await useCase.execute({
         subscriberId: itx.userId!,
         subscriberEmail: itx.userEmail,
         authorId,
       });
-      if (!subscribed) {
-        notFound(res);
-        return;
-      }
       res.status(204).end();
     }),
   );
@@ -68,14 +64,10 @@ export function createRouter(state: AppState): Router {
         state.userRepo,
         state.subscriptionRepo,
       );
-      const unsubscribed = await useCase.execute({
+      await useCase.execute({
         subscriberId: itx.userId!,
         authorId,
       });
-      if (!unsubscribed) {
-        notFound(res);
-        return;
-      }
       res.status(204).end();
     }),
   );

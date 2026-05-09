@@ -9,15 +9,10 @@ export type ExecuteParams = {
 export class GetPostUseCase {
   constructor(private readonly postRepo: PostRepo) {}
 
-  async execute(params: ExecuteParams): Promise<PostDto | null> {
-    const post = await this.postRepo.get(params.id).catch((err: unknown) => {
-      if (err instanceof NotFoundError) {
-        return null;
-      }
-      throw err;
-    });
-    if (!post || post.authorId !== params.userId) {
-      return null;
+  async execute(params: ExecuteParams): Promise<PostDto> {
+    const post = await this.postRepo.get(params.id);
+    if (post.authorId !== params.userId) {
+      throw new NotFoundError();
     }
     return toPostDto(post);
   }
