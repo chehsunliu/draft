@@ -1,49 +1,64 @@
 package io.github.chehsunliu.itx.backend.middleware;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Wraps the success-arm response in {@code { "data": <payload> }}. Handlers stash the payload via
- * {@link #data(Context, Object)}; an {@code afterMatched} hook installed by {@link
- * #install(Javalin, ObjectMapper)} serializes the wrapped envelope. Mirrors the success arm of the
- * wrap_response middleware in itx-rs.
+ * Transparent response wrapper. Mirrors the wrap_response middleware in itx-rs: handlers just call
+ * {@code ctx.json(dto)} or set a plaintext error body, and this hook rewrites the response on the
+ * way out — successes become {@code {"data": <body>}}, errors become {@code {"error": <body>}} (or
+ * {@code {"error": {"message": "<text>"}}} when the body isn't already JSON).
  */
 public final class Envelope {
-  private static final String DATA_ATTR = "itx.envelope.data";
+  private static final Logger log = LoggerFactory.getLogger(Envelope.class);
 
   private Envelope() {}
 
   public static void install(Javalin app, ObjectMapper mapper) {
-    app.afterMatched(
+    app.after(
         ctx -> {
-          Object data = ctx.attribute(DATA_ATTR);
-          if (data == null) return;
-          // Exception handlers may have overridden the response with an error body; skip
-          // wrapping so we don't clobber it.
-          if (ctx.statusCode() >= 400) return;
-          ctx.contentType("application/json")
-              .result(mapper.writeValueAsString(Map.of("data", data)));
+          try {
+            wrap(ctx, mapper);
+          } catch (Exception e) {
+            log.warn("envelope wrap failed", e);
+          }
         });
   }
 
-  public static void data(Context ctx, Object value) {
-    ctx.attribute(DATA_ATTR, value);
-  }
+  private static void wrap(Context ctx, ObjectMapper mapper) throws Exception {
+    int status = ctx.statusCode();
+    boolean isSuccess = status >= 200 && status < 300;
+    String contentType = ctx.res().getContentType();
+    boolean isJson = contentType != null && contentType.startsWith("application/json");
+    String body = ctx.result();
+    if (body == null) body = "";
 
-  public static void data(Context ctx, Object value, int status) {
-    ctx.status(status).attribute(DATA_ATTR, value);
-  }
+    // Success without a JSON body (e.g., 204 No Content) passes through.
+    if (isSuccess && !isJson) return;
 
-  public static void respondError(Context ctx, ObjectMapper mapper, int status, String message) {
-    try {
-      ctx.status(status)
-          .contentType("application/json")
+    if (isJson && !body.isEmpty()) {
+      JsonNode inner = mapper.readTree(body);
+      String key = isSuccess ? "data" : "error";
+      ctx.contentType("application/json").result(mapper.writeValueAsString(Map.of(key, inner)));
+      return;
+    }
+
+    if (!isSuccess) {
+      String message;
+      if (!body.isEmpty()) {
+        message = body;
+      } else {
+        HttpStatus s = HttpStatus.forStatus(status);
+        message = s == HttpStatus.UNKNOWN ? "error" : s.getMessage();
+      }
+      ctx.contentType("application/json")
           .result(mapper.writeValueAsString(Map.of("error", Map.of("message", message))));
-    } catch (Exception e) {
-      throw new RuntimeException(e);
     }
   }
 }

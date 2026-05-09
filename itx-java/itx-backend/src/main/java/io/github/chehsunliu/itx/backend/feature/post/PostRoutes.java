@@ -7,7 +7,6 @@ import io.github.chehsunliu.itx.backend.feature.post.usecase.DeletePostUseCase;
 import io.github.chehsunliu.itx.backend.feature.post.usecase.GetPostUseCase;
 import io.github.chehsunliu.itx.backend.feature.post.usecase.ListPostsUseCase;
 import io.github.chehsunliu.itx.backend.feature.post.usecase.UpdatePostUseCase;
-import io.github.chehsunliu.itx.backend.middleware.Envelope;
 import io.github.chehsunliu.itx.backend.middleware.ItxContext;
 import io.javalin.Javalin;
 
@@ -23,7 +22,7 @@ public final class PostRoutes {
           int offset = parseInt(ctx.queryParam("offset"), 0);
           ListPostsUseCase.ExecuteOutput out =
               state.listPosts.execute(new ListPostsUseCase.ExecuteParams(c.userId, limit, offset));
-          Envelope.data(ctx, out);
+          ctx.json(out);
         });
 
     app.post(
@@ -35,7 +34,7 @@ public final class PostRoutes {
               state.createPost.execute(
                   new CreatePostUseCase.ExecuteParams(
                       c.userId, body.title(), body.body(), body.tags()));
-          Envelope.data(ctx, dto, 201);
+          ctx.status(201).json(dto);
         });
 
     app.get(
@@ -44,7 +43,7 @@ public final class PostRoutes {
           ItxContext c = ItxContext.from(ctx);
           long id = Long.parseLong(ctx.pathParam("id"));
           PostDto dto = state.getPost.execute(new GetPostUseCase.ExecuteParams(id, c.userId));
-          Envelope.data(ctx, dto);
+          ctx.json(dto);
         });
 
     app.patch(
@@ -57,7 +56,7 @@ public final class PostRoutes {
               state.updatePost.execute(
                   new UpdatePostUseCase.ExecuteParams(
                       id, c.userId, body.title(), body.body(), body.tags()));
-          Envelope.data(ctx, dto);
+          ctx.json(dto);
         });
 
     app.delete(

@@ -26,18 +26,16 @@ public final class Module {
             });
 
     ItxContext.install(app);
-    Envelope.install(app, mapper);
 
-    // Auth gate: runs only after a handler matches, so unmatched paths still return 404 from
-    // the router — the same behavior as the Kotlin/Ktor RequireUser plugin.
+    // Auth gate: runs only after a route matches, so unmatched paths still return 404 from the
+    // router. Throws into the exception handler chain so the wrap middleware sees a plain
+    // status+body to wrap on the way out.
     app.beforeMatched(
         ctx -> {
-          String path = ctx.path();
-          if (path.equals("/api/v1/health")) return;
+          if (ctx.path().equals("/api/v1/health")) return;
           ItxContext c = ItxContext.from(ctx);
           if (c == null || c.userId == null) {
-            Envelope.respondError(ctx, mapper, 401, "Unauthorized");
-            ctx.skipRemainingHandlers();
+            throw new BackendException(401, "Unauthorized");
           }
         });
 
@@ -47,57 +45,37 @@ public final class Module {
     SubscriptionRoutes.register(app, state);
 
     app.exception(
-        BackendException.class,
-        (e, ctx) -> Envelope.respondError(ctx, mapper, e.status(), e.getMessage()));
-    app.exception(
-        RepoNotFoundException.class,
-        (e, ctx) -> Envelope.respondError(ctx, mapper, 404, "not found"));
+        BackendException.class, (e, ctx) -> ctx.status(e.status()).result(e.getMessage()));
+    app.exception(RepoNotFoundException.class, (e, ctx) -> ctx.status(404).result("not found"));
     app.exception(
         QueueException.class,
         (e, ctx) ->
-            Envelope.respondError(
-                ctx, mapper, 500, e.getMessage() == null ? "queue error" : e.getMessage()));
+            ctx.status(500).result(e.getMessage() == null ? "queue error" : e.getMessage()));
     app.exception(
         Exception.class,
         (e, ctx) ->
-            Envelope.respondError(
-                ctx, mapper, 500, e.getMessage() == null ? "internal error" : e.getMessage()));
+            ctx.status(500).result(e.getMessage() == null ? "internal error" : e.getMessage()));
 
-    // Error mappers run after exception handlers and would otherwise overwrite their bodies.
-    // Skip the override when an exception handler already wrote a JSON envelope; otherwise
-    // promote the unmatched-route default to a 405 if the path is registered for another
-    // method, and fall back to 404.
+    // Javalin's default 404 body is the plaintext "Endpoint X not found". Replace it with a
+    // clean "Not Found" message — or promote to 405 when the path is registered for another
+    // method — so the wrap middleware emits a tidy envelope.
     app.error(
         404,
         ctx -> {
-          if (isJsonBody(ctx)) return;
+          String body = ctx.result();
+          if (body == null || !body.startsWith("Endpoint ")) return;
           var available =
               MethodNotAllowedUtil.INSTANCE.findAvailableHttpHandlerTypes(
                   app.unsafeConfig().pvt.internalRouter, ctx.path());
           if (!available.isEmpty()) {
-            Envelope.respondError(ctx, mapper, 405, "Method Not Allowed");
+            ctx.status(405).result("Method Not Allowed");
           } else {
-            Envelope.respondError(ctx, mapper, 404, "Not Found");
+            ctx.result("Not Found");
           }
         });
-    app.error(
-        405,
-        ctx -> {
-          if (!isJsonBody(ctx)) Envelope.respondError(ctx, mapper, 405, "Method Not Allowed");
-        });
-    app.error(
-        401,
-        ctx -> {
-          if (!isJsonBody(ctx)) Envelope.respondError(ctx, mapper, 401, "Unauthorized");
-        });
+
+    Envelope.install(app, mapper);
 
     return app;
-  }
-
-  private static boolean isJsonBody(io.javalin.http.Context ctx) {
-    String body = ctx.result();
-    if (body == null || body.isEmpty()) return false;
-    String type = ctx.res().getContentType();
-    return type != null && type.startsWith("application/json");
   }
 }

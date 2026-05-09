@@ -4,7 +4,6 @@ import io.github.chehsunliu.itx.backend.AppState;
 import io.github.chehsunliu.itx.backend.error.BackendException;
 import io.github.chehsunliu.itx.backend.feature.user.usecase.GetMeUseCase;
 import io.github.chehsunliu.itx.backend.feature.user.usecase.ListSubscriptionsUseCase;
-import io.github.chehsunliu.itx.backend.middleware.Envelope;
 import io.github.chehsunliu.itx.backend.middleware.ItxContext;
 import io.javalin.Javalin;
 import java.util.UUID;
@@ -19,7 +18,7 @@ public final class UserRoutes {
           ItxContext c = ItxContext.from(ctx);
           if (c.userEmail == null) throw BackendException.unknown("missing X-Itx-User-Email");
           UserDto dto = state.getMe.execute(new GetMeUseCase.ExecuteParams(c.userId, c.userEmail));
-          Envelope.data(ctx, dto);
+          ctx.json(dto);
         });
 
     app.get(
@@ -33,7 +32,7 @@ public final class UserRoutes {
           }
           ListSubscriptionsUseCase.ExecuteOutput out =
               state.listSubscriptions.execute(new ListSubscriptionsUseCase.ExecuteParams(id));
-          Envelope.data(ctx, out);
+          ctx.json(out);
         });
   }
 }
