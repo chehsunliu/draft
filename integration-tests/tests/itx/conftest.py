@@ -43,6 +43,12 @@ artifact_profiles: dict[str, ArtifactProfile] = {
             "--mode=control",
         ],
     ),
+    "typescript": ArtifactProfile(
+        cwd=repo_root / "itx-ts",
+        build_cmd=["npm", "run", "build"],
+        backend_cmd=["node", "dist/bin/itx-backend.js"],
+        control_worker_cmd=["node", "dist/bin/itx-control-worker.js"],
+    ),
 }
 
 itx_lang = os.environ.get("ITX_LANG", "rust")

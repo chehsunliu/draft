@@ -1,0 +1,26 @@
+{
+  "name": "itx-ts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "fmt": "prettier --write \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.922.0",
+    "amqplib": "^0.10.9",
+    "express": "^5.1.0",
+    "mysql2": "^3.15.3",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.8",
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.0",
+    "@types/pg": "^8.15.6",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
+  }
+}
