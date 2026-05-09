@@ -1,6 +1,6 @@
 [versions]
 java = "25"
-javalin = "6.7.0"
+javalin = "7.2.0"
 jackson = "2.21.3"
 hikari = "7.0.2"
 postgres = "42.7.11"
