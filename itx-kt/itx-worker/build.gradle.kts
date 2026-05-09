@@ -1,7 +1,5 @@
 plugins {
-    application
-    alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.shadow)
+    id("itx.application-conventions")
 }
 
 dependencies {
@@ -21,8 +19,5 @@ application {
 
 tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
     archiveBaseName.set("itx-worker")
-    archiveClassifier.set("")
-    archiveVersion.set("")
-    mergeServiceFiles()
     manifest { attributes["Main-Class"] = "io.github.chehsunliu.itx.worker.MainKt" }
 }
