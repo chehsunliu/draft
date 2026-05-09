@@ -1,6 +1,5 @@
 plugins {
-    application
-    alias(libs.plugins.shadow)
+    id("itx.shadow-app-conventions")
 }
 
 dependencies {
@@ -17,12 +16,4 @@ dependencies {
 
 application {
     mainClass.set("io.github.chehsunliu.itx.backend.Main")
-}
-
-tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-    archiveBaseName.set("itx-backend")
-    archiveClassifier.set("")
-    archiveVersion.set("")
-    mergeServiceFiles()
-    manifest { attributes["Main-Class"] = "io.github.chehsunliu.itx.backend.Main" }
 }

@@ -1,3 +1,7 @@
+plugins {
+    id("itx.java-conventions")
+}
+
 dependencies {
     api(project(":itx-contract"))
 
