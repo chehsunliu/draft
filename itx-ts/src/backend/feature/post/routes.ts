@@ -39,10 +39,7 @@ export function createRouter(state: AppState): Router {
     requireUser,
     asyncHandler(async (req, res) => {
       const itx = (req as ItxRequest).itx;
-      const query = parseRequest(listPostsQuerySchema, req.query, res);
-      if (!query) {
-        return;
-      }
+      const query = parseRequest(listPostsQuerySchema, req.query);
       const useCase = new ListPostsUseCase(state.postRepo);
       const output = await useCase.execute({
         userId: itx.userId!,
@@ -58,10 +55,7 @@ export function createRouter(state: AppState): Router {
     requireUser,
     asyncHandler(async (req, res) => {
       const itx = (req as ItxRequest).itx;
-      const body = parseRequest(createPostBodySchema, req.body ?? {}, res);
-      if (!body) {
-        return;
-      }
+      const body = parseRequest(createPostBodySchema, req.body ?? {});
       const useCase = new CreatePostUseCase(
         state.postRepo,
         state.controlStandardQueue,
@@ -104,10 +98,7 @@ export function createRouter(state: AppState): Router {
         return;
       }
       const itx = (req as ItxRequest).itx;
-      const body = parseRequest(updatePostBodySchema, req.body ?? {}, res);
-      if (!body) {
-        return;
-      }
+      const body = parseRequest(updatePostBodySchema, req.body ?? {});
       const useCase = new UpdatePostUseCase(state.postRepo);
       const output = await useCase.execute({
         id,

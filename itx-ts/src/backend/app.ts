@@ -5,6 +5,7 @@ import * as post from "./feature/post/routes.js";
 import * as subscription from "./feature/subscription/routes.js";
 import * as user from "./feature/user/routes.js";
 import { AppState } from "./state.js";
+import { ZodError } from "zod";
 
 export function createApp(state: AppState): express.Express {
   const app = express();
@@ -21,6 +22,14 @@ export function createApp(state: AppState): express.Express {
   );
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (res.headersSent) {
+      return;
+    }
+    if (err instanceof ZodError) {
+      res.status(400).json({
+        error: {
+          message: err.issues[0]?.message ?? "invalid request",
+        },
+      });
       return;
     }
     console.error(err);
