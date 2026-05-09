@@ -1,12 +1,35 @@
 import { Router } from "express";
+import { z } from "zod";
 import { ItxRequest, requireUser } from "../../context.js";
-import { asyncHandler, notFound, parsePostId } from "../../http.js";
+import {
+  asyncHandler,
+  notFound,
+  parsePostId,
+  parseRequest,
+} from "../../http.js";
 import { AppState } from "../../state.js";
 import { CreatePostUseCase } from "./use_case/create_post.js";
 import { DeletePostUseCase } from "./use_case/delete_post.js";
 import { GetPostUseCase } from "./use_case/get_post.js";
 import { ListPostsUseCase } from "./use_case/list_posts.js";
 import { UpdatePostUseCase } from "./use_case/update_post.js";
+
+const listPostsQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().catch(50),
+  offset: z.coerce.number().int().nonnegative().catch(0),
+});
+
+const createPostBodySchema = z.object({
+  title: z.string().default(""),
+  body: z.string().default(""),
+  tags: z.array(z.string()).default([]),
+});
+
+const updatePostBodySchema = z.object({
+  title: z.string().optional(),
+  body: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
 
 export function createRouter(state: AppState): Router {
   const router = Router();
@@ -16,13 +39,15 @@ export function createRouter(state: AppState): Router {
     requireUser,
     asyncHandler(async (req, res) => {
       const itx = (req as ItxRequest).itx;
-      const limit = Number.parseInt(String(req.query.limit ?? "50"), 10) || 50;
-      const offset = Number.parseInt(String(req.query.offset ?? "0"), 10) || 0;
+      const query = parseRequest(listPostsQuerySchema, req.query, res);
+      if (!query) {
+        return;
+      }
       const useCase = new ListPostsUseCase(state.postRepo);
       const output = await useCase.execute({
         userId: itx.userId!,
-        limit,
-        offset,
+        limit: query.limit,
+        offset: query.offset,
       });
       res.json({ data: output });
     }),
@@ -33,20 +58,19 @@ export function createRouter(state: AppState): Router {
     requireUser,
     asyncHandler(async (req, res) => {
       const itx = (req as ItxRequest).itx;
-      const body = req.body as {
-        title?: string;
-        body?: string;
-        tags?: string[];
-      };
+      const body = parseRequest(createPostBodySchema, req.body ?? {}, res);
+      if (!body) {
+        return;
+      }
       const useCase = new CreatePostUseCase(
         state.postRepo,
         state.controlStandardQueue,
       );
       const output = await useCase.execute({
         userId: itx.userId!,
-        title: body.title ?? "",
-        body: body.body ?? "",
-        tags: Array.isArray(body.tags) ? body.tags : [],
+        title: body.title,
+        body: body.body,
+        tags: body.tags,
       });
       res.status(201).json({ data: output });
     }),
@@ -80,21 +104,17 @@ export function createRouter(state: AppState): Router {
         return;
       }
       const itx = (req as ItxRequest).itx;
-      const body = req.body as {
-        title?: string;
-        body?: string;
-        tags?: string[];
-      };
+      const body = parseRequest(updatePostBodySchema, req.body ?? {}, res);
+      if (!body) {
+        return;
+      }
       const useCase = new UpdatePostUseCase(state.postRepo);
       const output = await useCase.execute({
         id,
         userId: itx.userId!,
         title: body.title,
         body: body.body,
-        tags:
-          Object.hasOwn(body, "tags") && Array.isArray(body.tags)
-            ? body.tags
-            : undefined,
+        tags: body.tags,
       });
       if (!output) {
         notFound(res);

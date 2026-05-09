@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { z } from "zod";
 
 export type AsyncHandler = (
   req: Request,
@@ -32,4 +33,21 @@ export function parsePostId(req: Request, res: Response): number | null {
 
 export function notFound(res: Response): void {
   res.status(404).json({ error: { message: "not found" } });
+}
+
+export function parseRequest<T>(
+  schema: z.ZodType<T>,
+  value: unknown,
+  res: Response,
+): T | null {
+  const result = schema.safeParse(value);
+  if (!result.success) {
+    res.status(400).json({
+      error: {
+        message: result.error.issues[0]?.message ?? "invalid request",
+      },
+    });
+    return null;
+  }
+  return result.data;
 }
