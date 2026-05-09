@@ -11,17 +11,17 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public final class ListSubscriptionsUseCase {
-  public record ExecuteParams(UUID subscriberId) {}
+    public record ExecuteParams(UUID subscriberId) {}
 
-  public record ExecuteOutput(List<UserDto> items) {}
+    public record ExecuteOutput(List<UserDto> items) {}
 
-  private final UserRepo userRepo;
-  private final SubscriptionRepo subscriptionRepo;
+    private final UserRepo userRepo;
+    private final SubscriptionRepo subscriptionRepo;
 
-  public ExecuteOutput execute(ExecuteParams params) {
-    // Pre-check the subject so an unknown user yields 404, not an empty list.
-    userRepo.get(params.subscriberId);
-    List<User> authors = subscriptionRepo.listAuthors(params.subscriberId);
-    return new ExecuteOutput(authors.stream().map(UserDto::fromUser).collect(Collectors.toList()));
-  }
+    public ExecuteOutput execute(ExecuteParams params) {
+        // Pre-check the subject so an unknown user yields 404, not an empty list.
+        userRepo.get(params.subscriberId);
+        List<User> authors = subscriptionRepo.listAuthors(params.subscriberId);
+        return new ExecuteOutput(authors.stream().map(UserDto::fromUser).collect(Collectors.toList()));
+    }
 }

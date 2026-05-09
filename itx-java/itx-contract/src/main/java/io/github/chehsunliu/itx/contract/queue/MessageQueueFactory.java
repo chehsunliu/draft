@@ -1,11 +1,11 @@
 package io.github.chehsunliu.itx.contract.queue;
 
 public interface MessageQueueFactory {
-  MessageQueue createControlStandardQueue();
+    MessageQueue createControlStandardQueue();
 
-  MessageQueue createControlPremiumQueue();
+    MessageQueue createControlPremiumQueue();
 
-  MessageQueue createComputeStandardQueue();
+    MessageQueue createComputeStandardQueue();
 
-  MessageQueue createComputePremiumQueue();
+    MessageQueue createComputePremiumQueue();
 }

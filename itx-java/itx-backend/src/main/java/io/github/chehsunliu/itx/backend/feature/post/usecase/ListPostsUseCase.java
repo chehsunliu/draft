@@ -10,15 +10,14 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public final class ListPostsUseCase {
-  public record ExecuteParams(UUID userId, int limit, int offset) {}
+    public record ExecuteParams(UUID userId, int limit, int offset) {}
 
-  public record ExecuteOutput(List<PostDto> items) {}
+    public record ExecuteOutput(List<PostDto> items) {}
 
-  private final PostRepo postRepo;
+    private final PostRepo postRepo;
 
-  public ExecuteOutput execute(ExecuteParams params) {
-    List<Post> posts =
-        postRepo.list(new PostRepo.ListParams(params.userId, params.limit, params.offset));
-    return new ExecuteOutput(posts.stream().map(PostDto::fromPost).collect(Collectors.toList()));
-  }
+    public ExecuteOutput execute(ExecuteParams params) {
+        List<Post> posts = postRepo.list(new PostRepo.ListParams(params.userId, params.limit, params.offset));
+        return new ExecuteOutput(posts.stream().map(PostDto::fromPost).collect(Collectors.toList()));
+    }
 }

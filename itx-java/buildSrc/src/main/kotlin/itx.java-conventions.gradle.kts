@@ -1,4 +1,3 @@
-import com.diffplug.gradle.spotless.SpotlessExtension
 import org.gradle.api.artifacts.VersionCatalogsExtension
 
 plugins {
@@ -28,9 +27,8 @@ dependencies {
     "testAnnotationProcessor"(lombok)
 }
 
-extensions.configure<SpotlessExtension> {
+spotless {
     java {
-        target("src/**/*.java")
-        googleJavaFormat("1.30.0")
+        palantirJavaFormat()
     }
 }

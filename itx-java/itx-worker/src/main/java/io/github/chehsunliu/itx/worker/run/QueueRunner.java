@@ -14,49 +14,46 @@ import sun.misc.Signal;
 
 @Slf4j
 public final class QueueRunner {
-  private QueueRunner() {}
+    private QueueRunner() {}
 
-  /**
-   * Runs queue listeners in parallel, dispatching every message to {@code handler}. Returns when
-   * SIGTERM/SIGINT is received and all listeners have drained.
-   */
-  public static void runQueueLoops(
-      List<MessageQueue> queues, MessageHandler handler, boolean registerSignals) {
-    AtomicBoolean cancel = new AtomicBoolean(false);
+    /**
+     * Runs queue listeners in parallel, dispatching every message to {@code handler}. Returns when
+     * SIGTERM/SIGINT is received and all listeners have drained.
+     */
+    public static void runQueueLoops(List<MessageQueue> queues, MessageHandler handler, boolean registerSignals) {
+        AtomicBoolean cancel = new AtomicBoolean(false);
 
-    if (registerSignals) {
-      Signal.handle(new Signal("INT"), s -> cancel.set(true));
-      Signal.handle(new Signal("TERM"), s -> cancel.set(true));
-    }
+        if (registerSignals) {
+            Signal.handle(new Signal("INT"), s -> cancel.set(true));
+            Signal.handle(new Signal("TERM"), s -> cancel.set(true));
+        }
 
-    ExecutorService listeners =
-        Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("queue-listener-", 0).factory());
-    List<Future<?>> futures = new ArrayList<>(queues.size());
-    for (MessageQueue q : queues) {
-      futures.add(
-          listeners.submit(
-              () -> {
+        ExecutorService listeners = Executors.newThreadPerTaskExecutor(
+                Thread.ofVirtual().name("queue-listener-", 0).factory());
+        List<Future<?>> futures = new ArrayList<>(queues.size());
+        for (MessageQueue q : queues) {
+            futures.add(listeners.submit(() -> {
                 try {
-                  q.receive(handler, cancel);
-                  log.info("queue listener returned cleanly");
+                    q.receive(handler, cancel);
+                    log.info("queue listener returned cleanly");
                 } catch (Throwable t) {
-                  log.error("queue listener errored", t);
+                    log.error("queue listener errored", t);
                 }
-              }));
+            }));
+        }
+        for (Future<?> f : futures) {
+            try {
+                f.get();
+            } catch (Exception ignored) {
+                // already logged in the listener
+            }
+        }
+        listeners.shutdown();
+        try {
+            if (!listeners.awaitTermination(5, TimeUnit.SECONDS)) listeners.shutdownNow();
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            listeners.shutdownNow();
+        }
     }
-    for (Future<?> f : futures) {
-      try {
-        f.get();
-      } catch (Exception ignored) {
-        // already logged in the listener
-      }
-    }
-    listeners.shutdown();
-    try {
-      if (!listeners.awaitTermination(5, TimeUnit.SECONDS)) listeners.shutdownNow();
-    } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
-      listeners.shutdownNow();
-    }
-  }
 }

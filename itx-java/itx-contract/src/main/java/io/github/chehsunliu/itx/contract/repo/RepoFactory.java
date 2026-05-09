@@ -1,9 +1,9 @@
 package io.github.chehsunliu.itx.contract.repo;
 
 public interface RepoFactory {
-  PostRepo createPostRepo();
+    PostRepo createPostRepo();
 
-  UserRepo createUserRepo();
+    UserRepo createUserRepo();
 
-  SubscriptionRepo createSubscriptionRepo();
+    SubscriptionRepo createSubscriptionRepo();
 }

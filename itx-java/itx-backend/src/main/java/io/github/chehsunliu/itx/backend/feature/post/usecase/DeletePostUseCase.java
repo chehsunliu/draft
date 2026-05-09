@@ -6,11 +6,11 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public final class DeletePostUseCase {
-  public record ExecuteParams(long id, UUID userId) {}
+    public record ExecuteParams(long id, UUID userId) {}
 
-  private final PostRepo postRepo;
+    private final PostRepo postRepo;
 
-  public void execute(ExecuteParams params) {
-    postRepo.delete(new PostRepo.DeleteParams(params.id, params.userId));
-  }
+    public void execute(ExecuteParams params) {
+        postRepo.delete(new PostRepo.DeleteParams(params.id, params.userId));
+    }
 }

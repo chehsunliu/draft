@@ -10,7 +10,6 @@ amqpClient = "5.25.0"
 logback = "1.5.32"
 logstashEncoder = "8.0"
 spotless = "8.4.0"
-googleJavaFormat = "1.30.0"
 slf4j = "2.0.17"
 lombok = "1.18.40"
 

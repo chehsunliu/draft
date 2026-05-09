@@ -8,12 +8,12 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public final class GetMeUseCase {
-  public record ExecuteParams(UUID userId, String email) {}
+    public record ExecuteParams(UUID userId, String email) {}
 
-  private final UserRepo userRepo;
+    private final UserRepo userRepo;
 
-  public UserDto execute(ExecuteParams params) {
-    User user = userRepo.upsert(new UserRepo.UpsertParams(params.userId, params.email));
-    return UserDto.fromUser(user);
-  }
+    public UserDto execute(ExecuteParams params) {
+        User user = userRepo.upsert(new UserRepo.UpsertParams(params.userId, params.email));
+        return UserDto.fromUser(user);
+    }
 }

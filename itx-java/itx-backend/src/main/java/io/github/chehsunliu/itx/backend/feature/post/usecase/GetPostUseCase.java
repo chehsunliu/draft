@@ -9,13 +9,13 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public final class GetPostUseCase {
-  public record ExecuteParams(long id, UUID userId) {}
+    public record ExecuteParams(long id, UUID userId) {}
 
-  private final PostRepo postRepo;
+    private final PostRepo postRepo;
 
-  public PostDto execute(ExecuteParams params) {
-    Post post = postRepo.get(new PostRepo.GetParams(params.id));
-    if (!post.authorId().equals(params.userId)) throw BackendException.notFound();
-    return PostDto.fromPost(post);
-  }
+    public PostDto execute(ExecuteParams params) {
+        Post post = postRepo.get(new PostRepo.GetParams(params.id));
+        if (!post.authorId().equals(params.userId)) throw BackendException.notFound();
+        return PostDto.fromPost(post);
+    }
 }

@@ -16,47 +16,46 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public final class Envelope {
-  private Envelope() {}
+    private Envelope() {}
 
-  public static void install(Javalin app, ObjectMapper mapper) {
-    app.after(
-        ctx -> {
-          try {
-            wrap(ctx, mapper);
-          } catch (Exception e) {
-            log.warn("envelope wrap failed", e);
-          }
+    public static void install(Javalin app, ObjectMapper mapper) {
+        app.after(ctx -> {
+            try {
+                wrap(ctx, mapper);
+            } catch (Exception e) {
+                log.warn("envelope wrap failed", e);
+            }
         });
-  }
-
-  private static void wrap(Context ctx, ObjectMapper mapper) throws Exception {
-    int status = ctx.statusCode();
-    boolean isSuccess = status >= 200 && status < 300;
-    String contentType = ctx.res().getContentType();
-    boolean isJson = contentType != null && contentType.startsWith("application/json");
-    String body = ctx.result();
-    if (body == null) body = "";
-
-    // Success without a JSON body (e.g., 204 No Content) passes through.
-    if (isSuccess && !isJson) return;
-
-    if (isJson && !body.isEmpty()) {
-      JsonNode inner = mapper.readTree(body);
-      String key = isSuccess ? "data" : "error";
-      ctx.contentType("application/json").result(mapper.writeValueAsString(Map.of(key, inner)));
-      return;
     }
 
-    if (!isSuccess) {
-      String message;
-      if (!body.isEmpty()) {
-        message = body;
-      } else {
-        HttpStatus s = HttpStatus.forStatus(status);
-        message = s == HttpStatus.UNKNOWN ? "error" : s.getMessage();
-      }
-      ctx.contentType("application/json")
-          .result(mapper.writeValueAsString(Map.of("error", Map.of("message", message))));
+    private static void wrap(Context ctx, ObjectMapper mapper) throws Exception {
+        int status = ctx.statusCode();
+        boolean isSuccess = status >= 200 && status < 300;
+        String contentType = ctx.res().getContentType();
+        boolean isJson = contentType != null && contentType.startsWith("application/json");
+        String body = ctx.result();
+        if (body == null) body = "";
+
+        // Success without a JSON body (e.g., 204 No Content) passes through.
+        if (isSuccess && !isJson) return;
+
+        if (isJson && !body.isEmpty()) {
+            JsonNode inner = mapper.readTree(body);
+            String key = isSuccess ? "data" : "error";
+            ctx.contentType("application/json").result(mapper.writeValueAsString(Map.of(key, inner)));
+            return;
+        }
+
+        if (!isSuccess) {
+            String message;
+            if (!body.isEmpty()) {
+                message = body;
+            } else {
+                HttpStatus s = HttpStatus.forStatus(status);
+                message = s == HttpStatus.UNKNOWN ? "error" : s.getMessage();
+            }
+            ctx.contentType("application/json")
+                    .result(mapper.writeValueAsString(Map.of("error", Map.of("message", message))));
+        }
     }
-  }
 }
