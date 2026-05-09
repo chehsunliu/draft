@@ -1,7 +1,7 @@
 [versions]
 java = "25"
 kotlin = "2.3.21"
-ktor = "3.0.3"
+ktor = "3.4.3"
 kotlinxSerialization = "1.11.0"
 kotlinxCoroutines = "1.11.0"
 exposed = "0.61.0"
