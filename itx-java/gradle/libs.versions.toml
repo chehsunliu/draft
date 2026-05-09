@@ -2,7 +2,7 @@
 java = "25"
 javalin = "6.7.0"
 jackson = "2.19.2"
-hikari = "6.2.1"
+hikari = "6.3.3"
 postgres = "42.7.11"
 mariadb = "3.5.8"
 awsSdk = "2.44.4"
