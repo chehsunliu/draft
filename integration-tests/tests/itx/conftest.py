@@ -43,6 +43,17 @@ artifact_profiles: dict[str, ArtifactProfile] = {
             "--mode=control",
         ],
     ),
+    "java": ArtifactProfile(
+        cwd=repo_root / "itx-java",
+        build_cmd=["./gradlew", ":itx-backend:shadowJar", ":itx-worker:shadowJar"],
+        backend_cmd=["java", "-jar", "itx-backend/build/libs/itx-backend.jar"],
+        control_worker_cmd=[
+            "java",
+            "-jar",
+            "itx-worker/build/libs/itx-worker.jar",
+            "--mode=control",
+        ],
+    ),
     "typescript": ArtifactProfile(
         cwd=repo_root / "itx-ts",
         build_cmd=["npm", "run", "build"],

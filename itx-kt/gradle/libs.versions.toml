@@ -1,22 +1,27 @@
 [versions]
 java = "25"
-kotlin = "2.2.20"
-ktor = "3.0.3"
-kotlinxSerialization = "1.8.0"
-kotlinxCoroutines = "1.10.1"
-exposed = "0.58.0"
-hikari = "6.3.3"
+kotlin = "2.3.21"
+ktor = "3.4.3"
+kotlinxSerialization = "1.11.0"
+kotlinxCoroutines = "1.11.0"
+exposed = "1.2.0"
+hikari = "7.0.2"
 postgres = "42.7.11"
 mariadb = "3.5.8"
 awsSdk = "2.44.4"
-amqpClient = "5.25.0"
+amqpClient = "5.30.0"
 logback = "1.5.32"
-logstashEncoder = "8.0"
+logstashEncoder = "9.0"
+shadow = "9.4.1"
 spotless = "8.4.0"
 ktlint = "1.5.0"
 slf4j = "2.0.17"
 
 [libraries]
+gradle-plugin-kotlin-jvm = { module = "org.jetbrains.kotlin.jvm:org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
+gradle-plugin-kotlin-serialization = { module = "org.jetbrains.kotlin.plugin.serialization:org.jetbrains.kotlin.plugin.serialization.gradle.plugin", version.ref = "kotlin" }
+gradle-plugin-shadow = { module = "com.gradleup.shadow:com.gradleup.shadow.gradle.plugin", version.ref = "shadow" }
+gradle-plugin-spotless = { module = "com.diffplug.spotless:com.diffplug.spotless.gradle.plugin", version.ref = "spotless" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "kotlinxCoroutines" }
@@ -53,4 +58,4 @@ logstash-encoder = { module = "net.logstash.logback:logstash-logback-encoder", v
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
-shadow = { id = "com.gradleup.shadow", version = "8.3.10" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
