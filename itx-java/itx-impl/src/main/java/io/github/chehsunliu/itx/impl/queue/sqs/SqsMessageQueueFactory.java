@@ -6,9 +6,11 @@ import static io.github.chehsunliu.itx.impl.Env.requireEnv;
 import io.github.chehsunliu.itx.contract.queue.MessageQueue;
 import io.github.chehsunliu.itx.contract.queue.MessageQueueFactory;
 import java.net.URI;
+import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.SqsClientBuilder;
 
+@RequiredArgsConstructor
 public final class SqsMessageQueueFactory implements MessageQueueFactory {
   private final SqsClient client;
   private final int maxConcurrency;
@@ -16,21 +18,6 @@ public final class SqsMessageQueueFactory implements MessageQueueFactory {
   private final String controlPremiumQueueUrl;
   private final String computeStandardQueueUrl;
   private final String computePremiumQueueUrl;
-
-  public SqsMessageQueueFactory(
-      SqsClient client,
-      int maxConcurrency,
-      String controlStandardQueueUrl,
-      String controlPremiumQueueUrl,
-      String computeStandardQueueUrl,
-      String computePremiumQueueUrl) {
-    this.client = client;
-    this.maxConcurrency = maxConcurrency;
-    this.controlStandardQueueUrl = controlStandardQueueUrl;
-    this.controlPremiumQueueUrl = controlPremiumQueueUrl;
-    this.computeStandardQueueUrl = computeStandardQueueUrl;
-    this.computePremiumQueueUrl = computePremiumQueueUrl;
-  }
 
   public static SqsMessageQueueFactory fromEnv() {
     String endpoint = System.getenv("ITX_SQS_LOCAL_ENDPOINT_URL");

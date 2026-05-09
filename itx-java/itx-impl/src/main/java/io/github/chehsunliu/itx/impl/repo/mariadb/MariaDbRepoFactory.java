@@ -9,13 +9,11 @@ import io.github.chehsunliu.itx.contract.repo.RepoFactory;
 import io.github.chehsunliu.itx.contract.repo.SubscriptionRepo;
 import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import javax.sql.DataSource;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public final class MariaDbRepoFactory implements RepoFactory {
   private final DataSource dataSource;
-
-  public MariaDbRepoFactory(DataSource dataSource) {
-    this.dataSource = dataSource;
-  }
 
   public static MariaDbRepoFactory fromEnv() {
     return new MariaDbRepoFactory(dataSourceFromEnv());

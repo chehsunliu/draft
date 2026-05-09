@@ -9,13 +9,11 @@ import io.github.chehsunliu.itx.contract.repo.RepoFactory;
 import io.github.chehsunliu.itx.contract.repo.SubscriptionRepo;
 import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import javax.sql.DataSource;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public final class PostgresRepoFactory implements RepoFactory {
   private final DataSource dataSource;
-
-  public PostgresRepoFactory(DataSource dataSource) {
-    this.dataSource = dataSource;
-  }
 
   public static PostgresRepoFactory fromEnv() {
     return new PostgresRepoFactory(dataSourceFromEnv());

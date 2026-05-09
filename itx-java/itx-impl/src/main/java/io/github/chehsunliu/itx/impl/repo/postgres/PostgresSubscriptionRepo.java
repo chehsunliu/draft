@@ -10,13 +10,11 @@ import io.github.chehsunliu.itx.contract.repo.User;
 import java.util.List;
 import java.util.UUID;
 import javax.sql.DataSource;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 final class PostgresSubscriptionRepo implements SubscriptionRepo {
   private final DataSource ds;
-
-  PostgresSubscriptionRepo(DataSource ds) {
-    this.ds = ds;
-  }
 
   @Override
   public void subscribe(SubscribeParams params) {

@@ -9,13 +9,11 @@ import io.github.chehsunliu.itx.contract.repo.User;
 import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import java.util.UUID;
 import javax.sql.DataSource;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 final class MariaDbUserRepo implements UserRepo {
   private final DataSource ds;
-
-  MariaDbUserRepo(DataSource ds) {
-    this.ds = ds;
-  }
 
   @Override
   public User upsert(UpsertParams params) {

@@ -7,7 +7,9 @@ import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public final class ListSubscriptionsUseCase {
   public record ExecuteParams(UUID subscriberId) {}
 
@@ -15,11 +17,6 @@ public final class ListSubscriptionsUseCase {
 
   private final UserRepo userRepo;
   private final SubscriptionRepo subscriptionRepo;
-
-  public ListSubscriptionsUseCase(UserRepo userRepo, SubscriptionRepo subscriptionRepo) {
-    this.userRepo = userRepo;
-    this.subscriptionRepo = subscriptionRepo;
-  }
 
   public ExecuteOutput execute(ExecuteParams params) {
     // Pre-check the subject so an unknown user yields 404, not an empty list.

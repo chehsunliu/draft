@@ -1,8 +1,11 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
+import org.gradle.api.artifacts.VersionCatalogsExtension
 
 plugins {
     alias(libs.plugins.spotless)
 }
+
+val sharedLibs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
 allprojects {
     group = "io.github.chehsunliu.itx"
@@ -21,6 +24,14 @@ subprojects {
 
     repositories {
         mavenCentral()
+    }
+
+    val lombok = sharedLibs.findLibrary("lombok").get()
+    dependencies {
+        "compileOnly"(lombok)
+        "annotationProcessor"(lombok)
+        "testCompileOnly"(lombok)
+        "testAnnotationProcessor"(lombok)
     }
 
     extensions.configure<SpotlessExtension> {

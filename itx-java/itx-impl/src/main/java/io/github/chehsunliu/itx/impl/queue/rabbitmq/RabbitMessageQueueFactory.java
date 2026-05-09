@@ -8,7 +8,9 @@ import com.rabbitmq.client.ConnectionFactory;
 import io.github.chehsunliu.itx.contract.queue.MessageQueue;
 import io.github.chehsunliu.itx.contract.queue.MessageQueueFactory;
 import io.github.chehsunliu.itx.contract.queue.QueueException;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public final class RabbitMessageQueueFactory implements MessageQueueFactory {
   private final Connection connection;
   private final int maxConcurrency;
@@ -16,21 +18,6 @@ public final class RabbitMessageQueueFactory implements MessageQueueFactory {
   private final String controlPremiumQueue;
   private final String computeStandardQueue;
   private final String computePremiumQueue;
-
-  public RabbitMessageQueueFactory(
-      Connection connection,
-      int maxConcurrency,
-      String controlStandardQueue,
-      String controlPremiumQueue,
-      String computeStandardQueue,
-      String computePremiumQueue) {
-    this.connection = connection;
-    this.maxConcurrency = maxConcurrency;
-    this.controlStandardQueue = controlStandardQueue;
-    this.controlPremiumQueue = controlPremiumQueue;
-    this.computeStandardQueue = computeStandardQueue;
-    this.computePremiumQueue = computePremiumQueue;
-  }
 
   public static RabbitMessageQueueFactory fromEnv() {
     ConnectionFactory factory = new ConnectionFactory();

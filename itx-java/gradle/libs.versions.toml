@@ -12,6 +12,7 @@ logstashEncoder = "8.0"
 spotless = "8.4.0"
 googleJavaFormat = "1.30.0"
 slf4j = "2.0.17"
+lombok = "1.18.40"
 
 [libraries]
 javalin = { module = "io.javalin:javalin", version.ref = "javalin" }
@@ -29,6 +30,8 @@ aws-sso = { module = "software.amazon.awssdk:sso", version.ref = "awsSdk" }
 amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "amqpClient" }
 
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 logstash-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstashEncoder" }
 

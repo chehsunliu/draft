@@ -6,8 +6,7 @@ import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Transparent response wrapper. Mirrors the wrap_response middleware in itx-rs: handlers just call
@@ -15,9 +14,8 @@ import org.slf4j.LoggerFactory;
  * way out — successes become {@code {"data": <body>}}, errors become {@code {"error": <body>}} (or
  * {@code {"error": {"message": "<text>"}}} when the body isn't already JSON).
  */
+@Slf4j
 public final class Envelope {
-  private static final Logger log = LoggerFactory.getLogger(Envelope.class);
-
   private Envelope() {}
 
   public static void install(Javalin app, ObjectMapper mapper) {

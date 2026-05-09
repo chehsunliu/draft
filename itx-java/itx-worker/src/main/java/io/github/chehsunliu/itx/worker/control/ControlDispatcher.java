@@ -13,38 +13,17 @@ import io.github.chehsunliu.itx.contract.repo.User;
 import io.github.chehsunliu.itx.contract.repo.UserRepo;
 import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
+@RequiredArgsConstructor
 public final class ControlDispatcher implements MessageHandler {
-  private static final Logger log = LoggerFactory.getLogger(ControlDispatcher.class);
-
   private final PostRepo postRepo;
   private final UserRepo userRepo;
   private final SubscriptionRepo subscriptionRepo;
   private final EmailClient emailClient;
   private final ObjectMapper mapper;
-
-  public ControlDispatcher(
-      PostRepo postRepo,
-      UserRepo userRepo,
-      SubscriptionRepo subscriptionRepo,
-      EmailClient emailClient) {
-    this(postRepo, userRepo, subscriptionRepo, emailClient, new ObjectMapper());
-  }
-
-  public ControlDispatcher(
-      PostRepo postRepo,
-      UserRepo userRepo,
-      SubscriptionRepo subscriptionRepo,
-      EmailClient emailClient,
-      ObjectMapper mapper) {
-    this.postRepo = postRepo;
-    this.userRepo = userRepo;
-    this.subscriptionRepo = subscriptionRepo;
-    this.emailClient = emailClient;
-    this.mapper = mapper;
-  }
 
   @Override
   public void handle(String body) throws Exception {

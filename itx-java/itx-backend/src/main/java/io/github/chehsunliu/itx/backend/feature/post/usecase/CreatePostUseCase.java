@@ -9,20 +9,15 @@ import io.github.chehsunliu.itx.contract.repo.Post;
 import io.github.chehsunliu.itx.contract.repo.PostRepo;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public final class CreatePostUseCase {
   public record ExecuteParams(UUID userId, String title, String body, List<String> tags) {}
 
   private final PostRepo postRepo;
   private final MessageQueue controlStandardQueue;
   private final ObjectMapper mapper;
-
-  public CreatePostUseCase(
-      PostRepo postRepo, MessageQueue controlStandardQueue, ObjectMapper mapper) {
-    this.postRepo = postRepo;
-    this.controlStandardQueue = controlStandardQueue;
-    this.mapper = mapper;
-  }
 
   public PostDto execute(ExecuteParams params) {
     Post post =

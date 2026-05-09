@@ -9,14 +9,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import sun.misc.Signal;
 
+@Slf4j
 public final class QueueRunner {
-  private static final Logger log =
-      LoggerFactory.getLogger("io.github.chehsunliu.itx.worker.QueueRunner");
-
   private QueueRunner() {}
 
   /**

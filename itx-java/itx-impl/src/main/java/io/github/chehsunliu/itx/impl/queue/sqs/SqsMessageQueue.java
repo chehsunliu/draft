@@ -11,25 +11,19 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
+@Slf4j
+@RequiredArgsConstructor
 public final class SqsMessageQueue implements MessageQueue {
-  private static final Logger log = LoggerFactory.getLogger(SqsMessageQueue.class);
-
   private final SqsClient client;
   private final String queueUrl;
   private final int maxConcurrency;
-
-  public SqsMessageQueue(SqsClient client, String queueUrl, int maxConcurrency) {
-    this.client = client;
-    this.queueUrl = queueUrl;
-    this.maxConcurrency = maxConcurrency;
-  }
 
   @Override
   public void publish(String body) {

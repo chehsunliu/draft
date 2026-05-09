@@ -24,13 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.sql.DataSource;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 final class MariaDbPostRepo implements PostRepo {
   private final DataSource ds;
-
-  MariaDbPostRepo(DataSource ds) {
-    this.ds = ds;
-  }
 
   private record Row(
       long id,

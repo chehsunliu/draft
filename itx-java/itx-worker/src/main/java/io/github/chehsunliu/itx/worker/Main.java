@@ -1,5 +1,6 @@
 package io.github.chehsunliu.itx.worker;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.chehsunliu.itx.contract.queue.MessageHandler;
 import io.github.chehsunliu.itx.contract.queue.MessageQueue;
 import io.github.chehsunliu.itx.contract.queue.MessageQueueFactory;
@@ -65,7 +66,8 @@ public final class Main {
                 repoFactory.createPostRepo(),
                 repoFactory.createUserRepo(),
                 repoFactory.createSubscriptionRepo(),
-                HttpEmailClient.fromEnv());
+                HttpEmailClient.fromEnv(),
+                new ObjectMapper());
         yield new Wired(
             List.of(factory.createControlStandardQueue(), factory.createControlPremiumQueue()),
             dispatcher);
