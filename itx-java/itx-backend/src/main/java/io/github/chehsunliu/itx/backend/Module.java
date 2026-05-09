@@ -17,8 +17,7 @@ import io.javalin.json.JavalinJackson;
 public final class Module {
   private Module() {}
 
-  public static Javalin build(AppState state) {
-    ObjectMapper mapper = Json.newMapper();
+  public static Javalin build(AppState state, ObjectMapper mapper) {
     Javalin app =
         Javalin.create(
             cfg -> {
@@ -42,10 +41,10 @@ public final class Module {
           }
         });
 
-    HealthRoutes.register(app, mapper);
-    PostRoutes.register(app, mapper, state.postRepo, state.controlStandardQueue);
-    UserRoutes.register(app, mapper, state.userRepo, state.subscriptionRepo);
-    SubscriptionRoutes.register(app, mapper, state.userRepo, state.subscriptionRepo);
+    HealthRoutes.register(app);
+    PostRoutes.register(app, mapper, state);
+    UserRoutes.register(app, state);
+    SubscriptionRoutes.register(app, state);
 
     app.exception(
         BackendException.class,

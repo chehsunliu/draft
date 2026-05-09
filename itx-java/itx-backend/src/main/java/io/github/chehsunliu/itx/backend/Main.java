@@ -1,5 +1,6 @@
 package io.github.chehsunliu.itx.backend;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import sun.misc.Signal;
 
@@ -26,8 +27,9 @@ public final class Main {
 
   public static void main(String[] argv) {
     Args args = Args.parse(argv);
-    AppState state = AppState.fromEnv();
-    Javalin app = Module.build(state);
+    ObjectMapper mapper = Json.newMapper();
+    AppState state = AppState.fromEnv(mapper);
+    Javalin app = Module.build(state, mapper);
 
     // The integration test driver asserts proc.wait() == 0 on SIGINT. Default JVM behavior
     // exits 130 on signal, so trap SIGINT/SIGTERM, drain the engine, and exit cleanly.

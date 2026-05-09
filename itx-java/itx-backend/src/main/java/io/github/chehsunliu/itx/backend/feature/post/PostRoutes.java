@@ -1,32 +1,29 @@
 package io.github.chehsunliu.itx.backend.feature.post;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.chehsunliu.itx.backend.error.BackendException;
+import io.github.chehsunliu.itx.backend.AppState;
+import io.github.chehsunliu.itx.backend.feature.post.usecase.CreatePostUseCase;
+import io.github.chehsunliu.itx.backend.feature.post.usecase.DeletePostUseCase;
+import io.github.chehsunliu.itx.backend.feature.post.usecase.GetPostUseCase;
+import io.github.chehsunliu.itx.backend.feature.post.usecase.ListPostsUseCase;
+import io.github.chehsunliu.itx.backend.feature.post.usecase.UpdatePostUseCase;
 import io.github.chehsunliu.itx.backend.middleware.Envelope;
 import io.github.chehsunliu.itx.backend.middleware.ItxContext;
-import io.github.chehsunliu.itx.contract.queue.MessageQueue;
-import io.github.chehsunliu.itx.contract.queue.PostCreatedMessageBody;
-import io.github.chehsunliu.itx.contract.repo.Post;
-import io.github.chehsunliu.itx.contract.repo.PostRepo;
 import io.javalin.Javalin;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public final class PostRoutes {
   private PostRoutes() {}
 
-  public static void register(
-      Javalin app, ObjectMapper mapper, PostRepo postRepo, MessageQueue controlStandardQueue) {
+  public static void register(Javalin app, ObjectMapper mapper, AppState state) {
     app.get(
         "/api/v1/posts",
         ctx -> {
           ItxContext c = ItxContext.from(ctx);
           int limit = parseInt(ctx.queryParam("limit"), 50);
           int offset = parseInt(ctx.queryParam("offset"), 0);
-          List<Post> posts = postRepo.list(new PostRepo.ListParams(c.userId, limit, offset));
-          List<PostDto> items = posts.stream().map(PostDto::fromPost).collect(Collectors.toList());
-          Envelope.data(ctx, Map.of("items", items));
+          ListPostsUseCase.ExecuteOutput out =
+              state.listPosts.execute(new ListPostsUseCase.ExecuteParams(c.userId, limit, offset));
+          Envelope.data(ctx, out);
         });
 
     app.post(
@@ -34,14 +31,11 @@ public final class PostRoutes {
         ctx -> {
           ItxContext c = ItxContext.from(ctx);
           CreatePostRequest body = mapper.readValue(ctx.body(), CreatePostRequest.class);
-          Post created =
-              postRepo.create(
-                  new PostRepo.CreateParams(c.userId, body.title(), body.body(), body.tags()));
-          String payload =
-              mapper.writeValueAsString(
-                  PostCreatedMessageBody.of(created.id(), created.authorId()));
-          controlStandardQueue.publish(payload);
-          Envelope.data(ctx, PostDto.fromPost(created), 201);
+          PostDto dto =
+              state.createPost.execute(
+                  new CreatePostUseCase.ExecuteParams(
+                      c.userId, body.title(), body.body(), body.tags()));
+          Envelope.data(ctx, dto, 201);
         });
 
     app.get(
@@ -49,9 +43,8 @@ public final class PostRoutes {
         ctx -> {
           ItxContext c = ItxContext.from(ctx);
           long id = Long.parseLong(ctx.pathParam("id"));
-          Post post = postRepo.get(new PostRepo.GetParams(id));
-          if (!post.authorId().equals(c.userId)) throw BackendException.notFound();
-          Envelope.data(ctx, PostDto.fromPost(post));
+          PostDto dto = state.getPost.execute(new GetPostUseCase.ExecuteParams(id, c.userId));
+          Envelope.data(ctx, dto);
         });
 
     app.patch(
@@ -60,10 +53,11 @@ public final class PostRoutes {
           ItxContext c = ItxContext.from(ctx);
           long id = Long.parseLong(ctx.pathParam("id"));
           UpdatePostRequest body = mapper.readValue(ctx.body(), UpdatePostRequest.class);
-          Post updated =
-              postRepo.update(
-                  new PostRepo.UpdateParams(id, c.userId, body.title(), body.body(), body.tags()));
-          Envelope.data(ctx, PostDto.fromPost(updated));
+          PostDto dto =
+              state.updatePost.execute(
+                  new UpdatePostUseCase.ExecuteParams(
+                      id, c.userId, body.title(), body.body(), body.tags()));
+          Envelope.data(ctx, dto);
         });
 
     app.delete(
@@ -71,7 +65,7 @@ public final class PostRoutes {
         ctx -> {
           ItxContext c = ItxContext.from(ctx);
           long id = Long.parseLong(ctx.pathParam("id"));
-          postRepo.delete(new PostRepo.DeleteParams(id, c.userId));
+          state.deletePost.execute(new DeletePostUseCase.ExecuteParams(id, c.userId));
           ctx.status(204);
         });
   }
