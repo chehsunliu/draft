@@ -24,7 +24,7 @@ public final class UserRoutes {
           ItxContext c = ItxContext.from(ctx);
           if (c.userEmail == null) throw BackendException.unknown("missing X-Itx-User-Email");
           User user = userRepo.upsert(new UserRepo.UpsertParams(c.userId, c.userEmail));
-          Envelope.respondData(ctx, mapper, UserDto.fromUser(user));
+          Envelope.data(ctx, UserDto.fromUser(user));
         });
 
     app.get(
@@ -41,7 +41,7 @@ public final class UserRoutes {
           List<User> authors = subscriptionRepo.listAuthors(id);
           List<UserDto> items =
               authors.stream().map(UserDto::fromUser).collect(Collectors.toList());
-          Envelope.respondData(ctx, mapper, Map.of("items", items));
+          Envelope.data(ctx, Map.of("items", items));
         });
   }
 }

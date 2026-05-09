@@ -26,7 +26,7 @@ public final class PostRoutes {
           int offset = parseInt(ctx.queryParam("offset"), 0);
           List<Post> posts = postRepo.list(new PostRepo.ListParams(c.userId, limit, offset));
           List<PostDto> items = posts.stream().map(PostDto::fromPost).collect(Collectors.toList());
-          Envelope.respondData(ctx, mapper, Map.of("items", items));
+          Envelope.data(ctx, Map.of("items", items));
         });
 
     app.post(
@@ -41,7 +41,7 @@ public final class PostRoutes {
               mapper.writeValueAsString(
                   PostCreatedMessageBody.of(created.id(), created.authorId()));
           controlStandardQueue.publish(payload);
-          Envelope.respondData(ctx, mapper, PostDto.fromPost(created), 201);
+          Envelope.data(ctx, PostDto.fromPost(created), 201);
         });
 
     app.get(
@@ -51,7 +51,7 @@ public final class PostRoutes {
           long id = Long.parseLong(ctx.pathParam("id"));
           Post post = postRepo.get(new PostRepo.GetParams(id));
           if (!post.authorId().equals(c.userId)) throw BackendException.notFound();
-          Envelope.respondData(ctx, mapper, PostDto.fromPost(post));
+          Envelope.data(ctx, PostDto.fromPost(post));
         });
 
     app.patch(
@@ -63,7 +63,7 @@ public final class PostRoutes {
           Post updated =
               postRepo.update(
                   new PostRepo.UpdateParams(id, c.userId, body.title(), body.body(), body.tags()));
-          Envelope.respondData(ctx, mapper, PostDto.fromPost(updated));
+          Envelope.data(ctx, PostDto.fromPost(updated));
         });
 
     app.delete(

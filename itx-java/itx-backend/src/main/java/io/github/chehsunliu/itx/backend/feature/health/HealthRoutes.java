@@ -9,6 +9,6 @@ public final class HealthRoutes {
   private HealthRoutes() {}
 
   public static void register(Javalin app, ObjectMapper mapper) {
-    app.get("/api/v1/health", ctx -> Envelope.respondData(ctx, mapper, Map.of("status", "ok")));
+    app.get("/api/v1/health", ctx -> Envelope.data(ctx, Map.of("status", "ok")));
   }
 }

@@ -27,6 +27,7 @@ public final class Module {
             });
 
     ItxContext.install(app);
+    Envelope.install(app, mapper);
 
     // Auth gate: runs only after a handler matches, so unmatched paths still return 404 from
     // the router — the same behavior as the Kotlin/Ktor RequireUser plugin.
