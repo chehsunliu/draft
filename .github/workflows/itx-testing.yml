@@ -48,6 +48,8 @@ jobs:
     defaults:
       run:
         working-directory: integration-tests
+    env:
+      IS_COVERAGE_RUN: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -67,15 +69,29 @@ jobs:
 
       - uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
 
+      - uses: taiki-e/install-action@cargo-llvm-cov
+
       - name: Set Rust caching env vars
+        if: env.IS_COVERAGE_RUN == 'false'
         run: |
           echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
           echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+
+      - name: Set llvm-cov env vars
+        if: env.IS_COVERAGE_RUN == 'true'
+        working-directory: itx-rs
+        run: |
+          cargo llvm-cov show-env | sed -E "s/^([^=]+)='(.*)'$/\1=\2/" >> "$GITHUB_ENV"
 
       - name: Check Rust formatting
         if: needs.changes.outputs.rs-src == 'true'
         working-directory: itx-rs
         run: cargo fmt --all -- --check
+
+      - name: Clean coverage data
+        if: needs.changes.outputs.rs-src == 'true' && env.IS_COVERAGE_RUN == 'true'
+        working-directory: itx-rs
+        run: cargo llvm-cov clean --workspace
 
       - name: Build binaries
         if: needs.changes.outputs.rs-src == 'true'
@@ -96,6 +112,11 @@ jobs:
         run: uv run pytest --durations=50
         env:
           ITX_TEST_PROFILE: ${{ matrix.profile }}
+
+      - name: Generate test coverage
+        if: needs.changes.outputs.rs-src == 'true' && env.IS_COVERAGE_RUN == 'true'
+        working-directory: itx-rs
+        run: cargo llvm-cov report --summary-only
 
       - name: Shutdown containers
         if: needs.changes.outputs.rs-src == 'true'
